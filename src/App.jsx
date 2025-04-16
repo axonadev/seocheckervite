@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+/* import { useEffect } from "react"; */
 import "./App.css";
 
 import ProtectedRoutes from "./routes/ProtectedRoutes.jsx";
@@ -11,33 +11,33 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import LoginPage from "./pages/auth/Login.jsx";
 import Homepage from "./pages/Homepage.jsx";
 import Dashboard from "./pages/protected/Dashboard.jsx";
-import useEnv from "./hooks/useEnv.js";
+/* import useEnv from "./hooks/useEnv.js"; */
 import ScrollToTop from "./components/ScrollToTop.jsx";
 
-import PostRegistration from "./utility/PostRegistration";
+/* import PostRegistration from "./utility/PostRegistration"; */
 
-const VAPID_PUBLIC_KEY_TEST =
+/* const VAPID_PUBLIC_KEY_TEST =
   "BPc714ElxdcFcn1JI_hSg2uwbkNk1CYn0UwTmwfmOmHYR8vK2ppwxPK2-nqTxk_sxt8KgIdVyYlXytvGyq1DvUo";
 const VAPID_PUBLIC_KEY_PROD =
   "BPc714ElxdcFcn1JI_hSg2uwbkNk1CYn0UwTmwfmOmHYR8vK2ppwxPK2-nqTxk_sxt8KgIdVyYlXytvGyq1DvUo";
 
 const VAPID_PUBLIC_KEY =
-  document.location.hostname.indexOf("eventfy.it") > -1
+  document.location.hostname.indexOf(".it") > -1
     ? VAPID_PUBLIC_KEY_PROD
-    : VAPID_PUBLIC_KEY_TEST;
+    : VAPID_PUBLIC_KEY_TEST; */
 
-const urlBase64ToUint8Array = (base64String) => {
+/* const urlBase64ToUint8Array = (base64String) => {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = window.atob(base64);
   return new Uint8Array([...rawData].map((char) => char.charCodeAt(0)));
-};
+}; */
 
 function App() {
-  const Token = localStorage.getItem("axo_token");
-  const { AZIENDA } = useEnv();
+  /*   const Token = localStorage.getItem("axo_token");
+  const { AZIENDA } = useEnv(); */
 
-  useEffect(() => {
+  /*  useEffect(() => {
     if ("serviceWorker" in navigator && "PushManager" in window) {
       navigator.serviceWorker
         .register("/service-worker.js", {
@@ -69,11 +69,11 @@ function App() {
           );
         });
     }
-  }, []);
+  }, []); */
 
-  const { registraDispositivo } = PostRegistration();
+  /*   const { registraDispositivo } = PostRegistration(); */
 
-  useEffect(() => {
+  /*   useEffect(() => {
     registraDispositivo(
       localStorage.getItem("axo_endpoint"),
       localStorage.getItem("axo_P256DH"),
@@ -82,7 +82,7 @@ function App() {
       26,
       AZIENDA
     );
-  }, []);
+  }, []); */
 
   return (
     <Router>
