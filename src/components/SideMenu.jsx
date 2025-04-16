@@ -1,11 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Paper, Box, IconButton, Typography, Stack } from '@mui/material';
 import LanguageIcon from '@mui/icons-material/Language';
-import GridViewIcon from '@mui/icons-material/GridView';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ArticleIcon from '@mui/icons-material/Article';
 import StorageIcon from '@mui/icons-material/Storage';
+import NewProjectPopup from './NewProjectPopup';
 
 const SideMenu = () => {
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleNewProjectClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClosePopup = () => {
+    setAnchorEl(null);
+  };
+
   return (
     <Paper
       sx={{
@@ -53,8 +64,11 @@ const SideMenu = () => {
           spacing={2} 
           alignItems="center"
         >
-          <IconButton sx={{ color: '#fff' }}>
-            <GridViewIcon />
+          <IconButton 
+            sx={{ color: '#fff' }}
+            onClick={handleNewProjectClick}
+          >
+            <AddCircleOutlineIcon />
           </IconButton>
           <IconButton sx={{ color: '#fff' }}>
             <ArticleIcon />
@@ -64,6 +78,11 @@ const SideMenu = () => {
           </IconButton>
         </Stack>
       </Box>
+
+      <NewProjectPopup 
+        anchorEl={anchorEl}
+        onClose={handleClosePopup}
+      />
     </Paper>
   );
 };

@@ -26,7 +26,7 @@ const Header = () => {
                 ml: 1 
               }}
             >
-              Seo Checker
+              Seo Checker 
             </Typography>
           </Box>
           <Typography 
@@ -41,15 +41,19 @@ const Header = () => {
         </Toolbar>
       </AppBar>
       
-      {/* Search bar centered in main content */}
+      {/* Fixed search bar */}
       <Box
         sx={{
-          width: 'calc(100% - 72px)',  // Account for sidebar width
+          position: 'fixed',
+          top: '64px', // Height of AppBar
+          left: '72px', // Width of sidebar
+          right: 0,
+          zIndex: 1100,
           display: 'flex',
           justifyContent: 'center',
-          mt: 0,  // Reduced margin top
-          px: 3,
-          ml: '72px', 
+          padding: '16px',
+          paddingLeft: '24px', // Reduced from 48px to 24px to move closer to sidemenu
+          backgroundColor: '#f6f6f6',
         }}
       >
         <Paper
@@ -62,7 +66,7 @@ const Header = () => {
             borderRadius: '28px',
             height: '40px',
             px: 1,
-            border: '1px solid #6750A4'  // Add purple border
+            border: '1px solid #6750A4'
           }}
         >
           <Box

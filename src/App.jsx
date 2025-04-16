@@ -11,12 +11,14 @@ import LoginPage from "./pages/auth/Login.jsx";
 import Homepage from "./pages/Homepage.jsx";
 import Dashboard from "./pages/protected/Dashboard.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
-import SearchBar from "./components/SearchBar";
+import SearchBar from "./components/SearchBar/SearchBar";
 
 import { ThemeProvider } from '@mui/material/styles';
 import { theme } from './theme/theme';
 
 function App() {
+
+  localStorage.setItem("axo_token", "QRAjF0GHIbrQKZ1VH1pJBxfz2T4cd8FSKvbCtks1HdfLJttHDI_s_NzRfCsorSwawjBM2XxrTbPuzHWNVP6T7QkNaMCX_p_UUby6ZfcJkhwuvYFoMkRc7ma3Nn5zKY49jeO3");
   return (
     <ThemeProvider theme={theme}>
       <Router>

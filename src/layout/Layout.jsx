@@ -44,7 +44,7 @@ const Layout = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          mt: '64px',
+          mt: '130px', // Increased to account for header + search bar
           ml: '240px',
           p: 3,
           backgroundColor: '#FAFBFC'

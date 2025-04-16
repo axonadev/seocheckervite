@@ -5,12 +5,13 @@ import UpdateIcon from '@mui/icons-material/Update';
 import LanguageIcon from '@mui/icons-material/Language';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TagIcon from '@mui/icons-material/Tag';
+import  {FormatDate}  from '../../utility/FormatDate'; // Adjust the import path as necessary
 
 const ProjectCard = ({ project }) => {
   return (
     <Card sx={{ 
       minWidth: 275, 
-      m: 2,
+      m: 1, // Reduce margin
       borderRadius: 3,
       boxShadow: '0 3px 10px rgba(0,0,0,0.08)',
       transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
@@ -21,7 +22,7 @@ const ProjectCard = ({ project }) => {
     }}>
       <CardContent sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom fontWeight="600" color="primary">
-          {project.name}
+          {project.ProgettiSerp_Nome}
         </Typography>
         
         <Box display="flex" alignItems="center" mb={2}>
@@ -35,7 +36,7 @@ const ProjectCard = ({ project }) => {
           <Box display="flex" alignItems="center">
             <AccessTimeIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />
             <Typography variant="body2">
-              Ultimo Report: {project.lastReport}
+              Ultimo Report: {FormatDate(project.ProgettiSerp_UltimoReport, 'dd/MM/yyyy')}
             </Typography>
           </Box>
           <Box display="flex" alignItems="center">
