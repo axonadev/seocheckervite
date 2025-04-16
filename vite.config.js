@@ -19,9 +19,9 @@ export default defineConfig({
       },
 
       manifest: {
-        name: "testPwa",
-        short_name: "testPwa",
-        description: "test pwa",
+        name: "seoChecker",
+        short_name: "seoChecker",
+        description: "seoChecker",
         theme_color: "#ffffff",
       },
       injectManifest: {

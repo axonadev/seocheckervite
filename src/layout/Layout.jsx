@@ -31,7 +31,7 @@ const Layout = ({ children }) => {
   };
 
   useEffect(() => {
-    getLogin();
+    /* getLogin(); */
   }, []);
 
   return (
