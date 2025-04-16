@@ -10,6 +10,7 @@ import { Provider as Redux } from "react-redux";
 import { CssBaseline } from "@mui/material";
 
 import "./index.css";
+import "./styles/global.css";
 
 const theme = createTheme({
   palette: {

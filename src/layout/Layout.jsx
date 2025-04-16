@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import SideMenu from "../components/SideMenu";
 import Fab from "../components/Fab";
+import SearchBar from "../components/SearchBar/SearchBar";
 import { Box } from "@mui/material";
 import { LoginByToken } from "../utility/CallLogin";
 import { login } from "../store/storeLogin";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import styles from './Layout.module.css';
 
 import useDevice from "../hooks/useDevice";
 import Header from "../components/Header";
@@ -35,31 +37,22 @@ const Layout = ({ children }) => {
   }, []);
 
   return (
-    <>
+    <Box sx={{ display: 'flex' }}>
       <Header />
+      <SideMenu />
       <Box
+        component="main"
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          justifyItems: "center",
-          borderRadius: "7px",
+          flexGrow: 1,
+          mt: '64px',
+          ml: '240px',
+          p: 3,
+          backgroundColor: '#FAFBFC'
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            width: "100%",
-            minHeight: "calc(100vh - 238px)",
-          }}
-        >
-          {dimensions.width >= 600 ? <SideMenu /> : <Fab />}
-          {children}
-        </Box>
+        {children}
       </Box>
-
-      <Footer />
-    </>
+    </Box>
   );
 };
 

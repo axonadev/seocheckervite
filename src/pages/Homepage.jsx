@@ -9,7 +9,7 @@ const Homepage = () => {
   return (
     <>
       <Layout>
-        <div>HOMEPAGE</div>
+        <div></div>
       </Layout>
     </>
   );
