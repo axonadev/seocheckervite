@@ -5,9 +5,11 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ArticleIcon from '@mui/icons-material/Article';
 import StorageIcon from '@mui/icons-material/Storage';
 import NewProjectPopup from './NewProjectPopup';
+import { useNavigate } from 'react-router-dom';
 
 const SideMenu = () => {
   const [anchorEl, setAnchorEl] = useState(null);
+  const navigate = useNavigate();
 
   const handleNewProjectClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -15,6 +17,10 @@ const SideMenu = () => {
 
   const handleClosePopup = () => {
     setAnchorEl(null);
+  };
+
+  const handleHomeClick = () => {
+    navigate('/');
   };
 
   return (
@@ -73,7 +79,10 @@ const SideMenu = () => {
           <IconButton sx={{ color: '#fff' }}>
             <ArticleIcon />
           </IconButton>
-          <IconButton sx={{ color: '#fff' }}>
+          <IconButton 
+            sx={{ color: '#fff' }}
+            onClick={handleHomeClick}
+          >
             <StorageIcon />
           </IconButton>
         </Stack>

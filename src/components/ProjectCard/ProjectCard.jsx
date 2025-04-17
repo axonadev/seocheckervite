@@ -5,13 +5,22 @@ import UpdateIcon from '@mui/icons-material/Update';
 import LanguageIcon from '@mui/icons-material/Language';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TagIcon from '@mui/icons-material/Tag';
-import  {FormatDate}  from '../../utility/FormatDate'; // Adjust the import path as necessary
+import {FormatDate} from '../../utility/FormatDate';
 
 const ProjectCard = ({ project }) => {
+  // For debugging
+  console.log("Card rendering with project:", project);
+
+  // Get the domain from appropriate fields
+  const domainToDisplay = project.ProgettiSerp_DNS || project.domain || "No domain";
+  
+  // Get the keyword count
+  const keywordCount = project.totaleKeyword || project.keywords || 0;
+
   return (
     <Card sx={{ 
       minWidth: 275, 
-      m: 1, // Reduce margin
+      m: 1,
       borderRadius: 3,
       boxShadow: '0 3px 10px rgba(0,0,0,0.08)',
       transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
@@ -22,13 +31,13 @@ const ProjectCard = ({ project }) => {
     }}>
       <CardContent sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom fontWeight="600" color="primary">
-          {project.ProgettiSerp_Nome}
+          {project.ProgettiSerp_Nome || "Unnamed Project"}
         </Typography>
         
         <Box display="flex" alignItems="center" mb={2}>
           <LanguageIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />
           <Typography color="text.secondary" variant="body2">
-            {project.domain}
+            {domainToDisplay}
           </Typography>
         </Box>
 
@@ -36,13 +45,13 @@ const ProjectCard = ({ project }) => {
           <Box display="flex" alignItems="center">
             <AccessTimeIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />
             <Typography variant="body2">
-              Ultimo Report: {FormatDate(project.ProgettiSerp_UltimoReport, 'dd/MM/yyyy')}
+              Ultimo Report: {FormatDate(project.ProgettiSerp_UltimoReport || project.dataKeyword || new Date(), 'dd/MM/yyyy')}
             </Typography>
           </Box>
           <Box display="flex" alignItems="center">
             <TagIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />
             <Chip 
-              label={`${project.keywords} keywords`}
+              label={`${keywordCount} keywords`}
               size="small"
               sx={{ 
                 backgroundColor: 'rgba(25, 118, 210, 0.08)',
