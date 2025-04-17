@@ -14,7 +14,6 @@ const Homepage = () => {
 
   const [dati, setDati] = useState([]);
   const [keywords, setKeywords] = useState([]);
-  const [urls, setUrls] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const token = localStorage.getItem("axo_token");
@@ -75,7 +74,7 @@ const Homepage = () => {
     }
   };
 
-  const loadUrl = async () => {
+ /* const loadUrl = async () => {
     try {
       const response = await fetch(
         `https://apit.axonasrl.com/api/axo_sel/${token}/urlserp/urlserpsel/leggi`
@@ -87,17 +86,13 @@ const Homepage = () => {
       setUrls([]);
     }
   };
-
+*/
   useEffect(() => {
     loadDati();
     loadKeywords();
-    loadUrl();
   }, []);
 
-  console.log(dati, "dati");
-  console.log(keywords, "keywords");
-  console.log(urls, "urls");
-
+  
   if (loading) return null;
 
   return (
@@ -108,7 +103,7 @@ const Homepage = () => {
           Keywords caricate: {keywords.length}
         </Typography>
         <Typography sx={{ mt: 1 }} variant="body2">
-          URLs caricati: {urls.length}
+          URLs caricati: {dati.length}
         </Typography>
 
         {/* Debug information for troubleshooting */}
