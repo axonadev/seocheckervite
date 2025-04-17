@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import Layout from "../../layout/Layout";
 import ProjectGrid from "../../components/ProjectGrid/ProjectGrid";
 import { DataGrid } from '@mui/x-data-grid';
+import { Unarchive } from "@mui/icons-material";
+import { Fai, Scrivi } from "../../utility/callFetch";
+import useEnv from "../../hooks/useEnv";
 
 const Archive  = () => {
   const projects = Array.from({ length: 12 }, (_, i) => ({
@@ -12,6 +15,8 @@ const Archive  = () => {
       .toLocaleDateString("it-IT"),
     keywords: Math.floor(Math.random() * 1000),
   }));
+
+  const { SERVERAPI } = useEnv();
 
   const [dati, setDati] = useState([]);
   const [keywords, setKeywords] = useState([]);
@@ -23,7 +28,7 @@ const Archive  = () => {
 
   const loadDati = async () => {
     try {
-      const url = `https://apit.axonasrl.com/api/axo_sel/${token}/progettiserp/progettiserpsel/leggiArchivio`;
+      const url = `${SERVERAPI}/api/axo_sel/${token}/progettiserp/progettiserpsel/leggiArchivio`;
       console.log("Calling API:", url);
 
       const response = await fetch(url);
@@ -57,7 +62,7 @@ const Archive  = () => {
 
   const loadKeywords = async () => {
     try {
-      const url = `https://apit.axonasrl.com/api/axo_sel/${token}/keywordserp/keywordserpsel/leggi`;
+      const url = `${SERVERAPI}/api/axo_sel/${token}/keywordserp/keywordserpsel/leggi`;
       console.log("Calling keywords API:", url);
 
       const response = await fetch(url);
@@ -100,7 +105,26 @@ const Archive  = () => {
     { field: 'ProgettiSerp_DNS', headerName: 'Dominio', width: 200 },
     { field: 'ProgettiSerp_UltimoReport', headerName: 'Ultimo Report', width: 200 },
     { field: 'dataKeyword', headerName: 'Data Keyword', width: 200 },
-    { field: 'totaleKeyword', headerName: 'Totale Keyword', width: 150 }
+    { field: 'totaleKeyword', headerName: 'Totale Keyword', width: 150 },
+    {
+      field: 'IDOBJ',
+      headerName: 'Status',
+      renderCell:(params) => ( <Button variant="contained" onClick = {async()=>{
+              const apiUrl = `${SERVERAPI}/api/axo_sel`;
+
+              console.log("Calling API:", params);
+        
+              const UpdPj = {
+                IDOBJ: params.row.IDOBJ,
+                ProgettiSerp_Stato: 1,
+              };
+        
+              const response = await Scrivi(apiUrl,token,params.row.IDOBJ,"progettiserp","progettiserpsel",UpdPj)
+
+              loadDati(); // Ricarica i dati dopo l'archiviazione
+      }}><Unarchive></Unarchive></Button>  ),
+      width: 150,      
+    },
   ];
   
   // Aggiungo una chiave 'id' per ogni riga (necessaria per la DataGrid)
