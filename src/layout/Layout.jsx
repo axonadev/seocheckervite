@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import SideMenu from "../components/SideMenu";
 import Fab from "../components/Fab";
 import SearchBar from "../components/SearchBar/SearchBar";
-import { Box } from "@mui/material";
+import { Box, private_excludeVariablesFromRoot } from "@mui/material";
 import { LoginByToken } from "../utility/CallLogin";
 import { login } from "../store/storeLogin";
 import { useDispatch } from "react-redux";
@@ -39,19 +39,21 @@ const Layout = ({ children }) => {
   return (
     <Box sx={{ display: 'flex' }}>
       <Header />
+      <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
       <SideMenu />
       <Box
-        component="main"
+
         sx={{
-          flexGrow: 1,
-          mt: '130px', // Increased to account for header + search bar
-          ml: '240px',
-          p: 3,
+         marginLeft :  "60px",
+         marginTop : "60px",
+
+          
           backgroundColor: '#FAFBFC'
         }}
       >
         {children}
       </Box>
+    </Box>
     </Box>
   );
 };

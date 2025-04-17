@@ -23,6 +23,10 @@ const SideMenu = () => {
     navigate('/');
   };
 
+  const handleArchiveClick = () => {
+    navigate('/archive');
+  };
+
   return (
     <Paper
       sx={{
@@ -76,14 +80,17 @@ const SideMenu = () => {
           >
             <AddCircleOutlineIcon />
           </IconButton>
-          <IconButton sx={{ color: '#fff' }}>
+          <IconButton sx={{ color: '#fff' }} onClick={handleHomeClick}>
             <ArticleIcon />
           </IconButton>
           <IconButton 
             sx={{ color: '#fff' }}
-            onClick={handleHomeClick}
+            onClick={handleArchiveClick}
           >
-            <StorageIcon />
+            <StorageIcon /> 
+
+            
+            
           </IconButton>
         </Stack>
       </Box>

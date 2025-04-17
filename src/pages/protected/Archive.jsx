@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
-import Layout from "../layout/Layout";
-import ProjectGrid from "../components/ProjectGrid/ProjectGrid";
+import Layout from "../../layout/Layout";
+import ProjectGrid from "../../components/ProjectGrid/ProjectGrid";
+import { DataGrid } from '@mui/x-data-grid';
 
-const Homepage = () => {
+const Archive  = () => {
   const projects = Array.from({ length: 12 }, (_, i) => ({
     name: `Project ${i + 1}`,
     domain: `example${i + 1}.com`,
@@ -22,7 +23,7 @@ const Homepage = () => {
 
   const loadDati = async () => {
     try {
-      const url = `https://apit.axonasrl.com/api/axo_sel/${token}/progettiserp/progettiserpsel/leggi`;
+      const url = `https://apit.axonasrl.com/api/axo_sel/${token}/progettiserp/progettiserpsel/leggiArchivio`;
       console.log("Calling API:", url);
 
       const response = await fetch(url);
@@ -92,26 +93,38 @@ const Homepage = () => {
     loadKeywords();
   }, []);
 
+  const columns = [
+    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'ProgettiSerp_Nome', headerName: 'Nome Progetto', width: 200 },
+    { field: 'ProgettiSerp_Stato', headerName: 'Stato', width: 100 },
+    { field: 'ProgettiSerp_DNS', headerName: 'Dominio', width: 200 },
+    { field: 'ProgettiSerp_UltimoReport', headerName: 'Ultimo Report', width: 200 },
+    { field: 'dataKeyword', headerName: 'Data Keyword', width: 200 },
+    { field: 'totaleKeyword', headerName: 'Totale Keyword', width: 150 }
+  ];
   
+  // Aggiungo una chiave 'id' per ogni riga (necessaria per la DataGrid)
+  const rows = dati.map((item, index) => ({
+    id: index + 1,
+    ...item
+  }));
+
   if (loading) return null;
 
   return (
     <Layout>
-      <Box sx={{ pl: "-100x", pr: 3 }}>
-        <ProjectGrid projects={dati} onProjectUpdate={()=>{
-          loadDati(); // Ricarica i dati dopo l'aggiornamento di un progetto
-        }} />
-        <Typography sx={{ mt: 2 }} variant="body2">
-          Keywords caricate: {keywords.length}
-        </Typography>
-        <Typography sx={{ mt: 1 }} variant="body2">
-          URLs caricati: {dati.length}
-        </Typography>
 
+        
+        <DataGrid
+        rows={rows}
+        columns={columns}
        
-      </Box>
+      />
+
+
+    
     </Layout>
   );
 };
 
-export default Homepage;
+export default Archive;

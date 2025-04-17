@@ -13,7 +13,7 @@ const useEnv = () => {
 
   if (nameUrl.includes("localhost")) {
     return {
-      SERVERAPI: "https://apis.axonasrl.com",
+      SERVERAPI: "https://apit.axonasrl.com", // O l'endpoint corretto per localhost se diverso
       AZIENDA: "02546790185",
       SERVERWEB: "http://localhost:5173",
       SERVERPATH: "svil.axonasrl.com",
@@ -30,6 +30,7 @@ const useEnv = () => {
       TokenGuest,
     };
   } else {
+    // Assicurati che questo sia l'endpoint di produzione corretto
     return {
       SERVERAPI: "https://api.axonasrl.com",
       AZIENDA: "02546790185",

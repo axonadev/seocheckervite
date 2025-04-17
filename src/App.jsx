@@ -15,6 +15,7 @@ import SearchBar from "./components/SearchBar/SearchBar";
 
 import { ThemeProvider } from '@mui/material/styles';
 import { theme } from './theme/theme';
+import Archive from "./pages/protected/Archive.jsx";
 
 function App() {
 
@@ -29,6 +30,9 @@ function App() {
         <SearchBar />
         <Routes>
           <Route path={"/"} element={<Homepage />}></Route>
+          <Route path={"/projects"} element={<Homepage />}></Route>
+          <Route path={"/archive"} element={<Archive />}></Route>
+          <Route path={"/projects/:id"} element={<Homepage />}></Route>
           <Route element={<InvisibleRoutesIfAuth />}>
             <Route path={"/login"} element={<LoginPage />}></Route>
           </Route>
