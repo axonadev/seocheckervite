@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, IconButton, Paper, Grid, Select, MenuItem, FormControl } from '@mui/material';
+import { Box, Typography, Button, IconButton, Paper, Grid, Select, MenuItem, FormControl, Avatar } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
@@ -9,6 +9,7 @@ import AddIcon from '@mui/icons-material/Add';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import KeyIcon from '@mui/icons-material/Key';
 import PeopleIcon from '@mui/icons-material/People';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import Layout from '../layout/Layout';
 import useEnv from '../hooks/useEnv';
 import { FormatDate } from '../utility/FormatDate';
@@ -24,6 +25,7 @@ const ProjectDetail = () => {
   const navigate = useNavigate();
   const { SERVERAPI } = useEnv();
   const token = localStorage.getItem("axo_token");
+  const fileInputRef = useRef(null);
 
   const [project, setProject] = useState(null);
   const [keywords, setKeywords] = useState([]);
@@ -31,6 +33,7 @@ const ProjectDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchEngine, setSearchEngine] = useState('google.it - Italia');
+  const [projectLogo, setProjectLogo] = useState(null);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -50,11 +53,12 @@ const ProjectDetail = () => {
           throw new Error('Project not found');
         }
 
-        const keywordsUrl = `${SERVERAPI}/api/axo_sel/${token}/progettiserp/progettiserpsel/leggiKeyWords/${id}`;
+        const keywordsUrl = `${SERVERAPI}/api/axo_sel/${token}/progettiserp/progettiserpsel/leggiKeyWords/${id}`;    //da rimettere ${id
         const keywordsResponse = await fetch(keywordsUrl);
         if (!keywordsResponse.ok) {
           console.error(`HTTP error fetching keywords! status: ${keywordsResponse.status}`);
           setKeywords([]);
+          setKeywordsGraphics([]);
         } else {
           const keywordsData = await keywordsResponse.json();
           console.log("keywordsData", keywordsData);
@@ -67,7 +71,7 @@ const ProjectDetail = () => {
             KeywordSerp_URL: kw.urlkey || kw.KeywordSerp_URL || kw.url || kw.URL || "",
           }));
           setKeywords(keywordsWithId);
-          setKeywordsGraphics(keywordsData.Itemset.v_graphicdata || []);
+          setKeywordsGraphics(keywordsData?.Itemset?.v_graphicdata || []);
         }
 
       } catch (err) {
@@ -75,6 +79,7 @@ const ProjectDetail = () => {
         setError(err.message);
         setProject(null);
         setKeywords([]);
+        setKeywordsGraphics([]);
       } finally {
         setLoading(false);
       }
@@ -94,6 +99,34 @@ const ProjectDetail = () => {
 
   const handleSearchEngineChange = (event) => {
     setSearchEngine(event.target.value);
+  };
+
+  const handleLogoClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleLogoChange = (event) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      
+      // Check file type
+      if (!file.type.match('image.*')) {
+        alert('Per favore seleziona un\'immagine');
+        return;
+      }
+      
+      // Check file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('L\'immagine non può superare i 2MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProjectLogo(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const keywordColumns = [
@@ -121,7 +154,7 @@ const ProjectDetail = () => {
 
   if (error) {
     return (
-      <Layout>
+      <Layout showSearchBar={false}>
         <Box sx={{ p: 3, textAlign: 'center' }}>
           <Typography color="error">Error loading project: {error}</Typography>
           <Button startIcon={<ArrowBackIcon />} onClick={handleBackClick} sx={{ mt: 2 }}>
@@ -134,7 +167,7 @@ const ProjectDetail = () => {
 
   if (!project) {
     return (
-      <Layout>
+      <Layout showSearchBar={false}>
         <Box sx={{ p: 3, textAlign: 'center' }}>
           <Typography>Project not found.</Typography>
           <Button startIcon={<ArrowBackIcon />} onClick={handleBackClick} sx={{ mt: 2 }}>
@@ -224,20 +257,63 @@ const ProjectDetail = () => {
   };
 
   return (
-    <Layout>
+    <Layout showSearchBar={false}>
       <Box sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Button startIcon={<ArrowBackIcon />} onClick={handleBackClick}>
-            Indietro
-          </Button>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <Button variant="outlined" sx={{ minWidth: '120px' }}>Insert logo</Button>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <PeopleIcon />
-              <Typography variant="h6">Team</Typography>
+        {/* Top Section */}
+        <Grid container spacing={2} sx={{ mb: 3, alignItems: 'flex-start' }}>
+          {/* Left: Back Button, Project Name, Domain */}
+          <Grid item xs={12} md={4}>
+            <Button startIcon={<ArrowBackIcon />} onClick={handleBackClick}>
+              Indietro
+            </Button>
+            <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <EditIcon fontSize="small" sx={{ cursor: 'pointer' }} />
+              {project.ProgettiSerp_Nome || "Unnamed Project"}
+            </Typography>
+          </Grid>
+
+          {/* Center: Logo and Team */}
+          <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleLogoChange}
+              style={{ display: 'none' }}
+            />
+            
+            {projectLogo ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Avatar
+                  src={projectLogo}
+                  alt="Project logo"
+                  sx={{ width: 48, height: 48, cursor: 'pointer', border: '1px solid #eee' }}
+                  onClick={handleLogoClick}
+                />
+                <Typography variant="caption" color="text.secondary">
+                  Clicca per cambiare
+                </Typography>
+              </Box>
+            ) : (
+              <Button
+                variant="outlined"
+                sx={{ minWidth: '120px', mb: 1 }}
+                onClick={handleLogoClick}
+                startIcon={<AddPhotoAlternateIcon />}
+              >
+                Insert logo
+              </Button>
+            )}
+            {/* Placeholder for Team Icon */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+              
+            
             </Box>
-          </Box>
-          <Box sx={{ textAlign: 'right' }}>
+          </Grid>
+
+          {/* Right: Dates */}
+          <Grid item xs={12} md={4} sx={{ textAlign: 'right' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
               <CalendarTodayIcon fontSize="small" />
               <Typography variant="body2">Data inserimento:</Typography>
@@ -248,20 +324,12 @@ const ProjectDetail = () => {
               <Typography variant="body2">Data ultimo report:</Typography>
             </Box>
             <Typography variant="body1" fontWeight="bold">{FormatDate(project.ProgettiSerp_UltimoReport || project.dataKeyword, 'dd-MM-yyyy')}</Typography>
-          </Box>
-        </Box>
+          </Grid>
+        </Grid>
 
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <EditIcon fontSize="small" sx={{ cursor: 'pointer' }} />
-            {project.ProgettiSerp_Nome || "Unnamed Project"}
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {project.ProgettiSerp_DNS || "No domain"}
-          </Typography>
-        </Box>
-
+        {/* Main Content Grid */}
         <Grid container spacing={3}>
+          {/* Left Column: Keywords Table */}
           <Grid item xs={12} md={8}>
             <Paper sx={{ p: 2, height: '100%' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -299,10 +367,11 @@ const ProjectDetail = () => {
             </Paper>
           </Grid>
 
+          {/* Right Column: Pie Chart */}
           <Grid item xs={12} md={4}>
             <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>% Presenza url in pagina</Typography>
-              <Box sx={{ position: 'relative', height: '300px', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <Box sx={{ position: 'relative', height: '450px', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <Pie data={pieChartData} options={pieChartOptions} />
                 <Typography
                   sx={{

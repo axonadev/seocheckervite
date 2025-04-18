@@ -29,6 +29,9 @@ const SearchBar = ({ onSearch }) => {
         borderRadius: '24px',
         boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
         backgroundColor: '#F4F4F4',
+        position: 'sticky',
+        top: '64px',
+        zIndex: 900,
       }}
     >
       <IconButton 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import SideMenu from "../components/SideMenu";
-import Fab from "../components/Fab";
+import SearchBar from "../components/SearchBar";
 import { Box } from "@mui/material";
 import { LoginByToken } from "../utility/CallLogin";
 import { login } from "../store/storeLogin";
@@ -12,7 +12,7 @@ import useDevice from "../hooks/useDevice";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
-const Layout = ({ children }) => {
+const Layout = ({ children, onProjectAdded, showSearchBar = true, onSearch = () => {} }) => {
   const naviga = useNavigate();
   const { dimensions } = useDevice();
   const sessionToken = localStorage.getItem("axo_token");
@@ -36,16 +36,17 @@ const Layout = ({ children }) => {
     <Box sx={{ display: 'flex' }}>
       <Header />
       <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-        <SideMenu />
+        <SideMenu onProjectAdded={onProjectAdded} />
         <Box
           sx={{
-           marginLeft :  "60px",
-           marginTop : "60px",
+           marginLeft: "60px",
+           marginTop: "60px",
            backgroundColor: '#FAFBFC',
            p: 2,
            flexGrow: 1
           }}
         >
+          {showSearchBar && <SearchBar onSearch={onSearch} />}
           {children}
         </Box>
       </Box>

@@ -86,6 +86,12 @@ const Homepage = () => {
     setSearchTerm(term.toLowerCase()); // Converti in minuscolo per ricerca case-insensitive
   };
 
+  // Handler for when a new project is added
+  const handleProjectAdded = () => {
+    // Reload data when a new project is added
+    loadDati();
+  };
+
   // Filtra i progetti in base al termine di ricerca
   const filteredProjects = dati.filter(project =>
     (project.ProgettiSerp_Nome || '').toLowerCase().includes(searchTerm) ||
@@ -95,10 +101,7 @@ const Homepage = () => {
   if (loading) return null;
 
   return (
-    <Layout>
-      <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
-        <SearchBar onSearch={handleSearch} />
-      </Box>
+    <Layout onProjectAdded={handleProjectAdded} showSearchBar={true} onSearch={handleSearch}>
       <Box sx={{ pl: 2, pr: 3 }}>
         <ProjectGrid projects={filteredProjects} onProjectUpdate={() => {
           loadDati(); // Ricarica i dati dopo l'aggiornamento di un progetto

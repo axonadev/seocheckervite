@@ -7,7 +7,7 @@ import StorageIcon from '@mui/icons-material/Storage';
 import NewProjectPopup from './NewProjectPopup';
 import { useNavigate } from 'react-router-dom';
 
-const SideMenu = () => {
+const SideMenu = ({ onProjectAdded }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
 
@@ -25,6 +25,12 @@ const SideMenu = () => {
 
   const handleArchiveClick = () => {
     navigate('/archive');
+  };
+
+  const handleProjectAdded = () => {
+    if (onProjectAdded) {
+      onProjectAdded();
+    }
   };
 
   return (
@@ -88,9 +94,6 @@ const SideMenu = () => {
             onClick={handleArchiveClick}
           >
             <StorageIcon /> 
-
-            
-            
           </IconButton>
         </Stack>
       </Box>
@@ -98,6 +101,7 @@ const SideMenu = () => {
       <NewProjectPopup 
         anchorEl={anchorEl}
         onClose={handleClosePopup}
+        onProjectAdded={handleProjectAdded}
       />
     </Paper>
   );
