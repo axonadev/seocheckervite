@@ -11,7 +11,7 @@ import LoginPage from "./pages/auth/Login.jsx";
 import Homepage from "./pages/Homepage.jsx";
 import Dashboard from "./pages/protected/Dashboard.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
-import SearchBar from "./components/SearchBar/SearchBar";
+import ProjectDetail from "./pages/ProjectDetail.jsx"; // Import the new page
 
 import { ThemeProvider } from '@mui/material/styles';
 import { theme } from './theme/theme';
@@ -27,12 +27,11 @@ function App() {
         <header>
           {/* Add your header content here */}
         </header>
-        <SearchBar />
         <Routes>
           <Route path={"/"} element={<Homepage />}></Route>
           <Route path={"/projects"} element={<Homepage />}></Route>
           <Route path={"/archive"} element={<Archive />}></Route>
-          <Route path={"/projects/:id"} element={<Homepage />}></Route>
+          <Route path={"/projects/:id"} element={<ProjectDetail />}></Route> {/* Updated route */}
           <Route element={<InvisibleRoutesIfAuth />}>
             <Route path={"/login"} element={<LoginPage />}></Route>
           </Route>

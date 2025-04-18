@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import Layout from "../layout/Layout";
 import ProjectGrid from "../components/ProjectGrid/ProjectGrid";
+import SearchBar from "../components/SearchBar";
 
 const Homepage = () => {
   const projects = Array.from({ length: 12 }, (_, i) => ({
@@ -15,6 +16,7 @@ const Homepage = () => {
   const [dati, setDati] = useState([]);
   const [keywords, setKeywords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState(""); // Stato per il termine di ricerca
 
   const token = localStorage.getItem("axo_token");
 
@@ -74,31 +76,31 @@ const Homepage = () => {
     }
   };
 
- /* const loadUrl = async () => {
-    try {
-      const response = await fetch(
-        `https://apit.axonasrl.com/api/axo_sel/${token}/urlserp/urlserpsel/leggi`
-      );
-      const data = await response.json();
-      setUrls(data?.Itemset?.v_urlserp || []);
-    } catch (err) {
-      console.error("Error loading URLs", err);
-      setUrls([]);
-    }
-  };
-*/
   useEffect(() => {
     loadDati();
     loadKeywords();
   }, []);
 
-  
+  // Funzione per gestire l'aggiornamento del termine di ricerca
+  const handleSearch = (term) => {
+    setSearchTerm(term.toLowerCase()); // Converti in minuscolo per ricerca case-insensitive
+  };
+
+  // Filtra i progetti in base al termine di ricerca
+  const filteredProjects = dati.filter(project =>
+    (project.ProgettiSerp_Nome || '').toLowerCase().includes(searchTerm) ||
+    (project.ProgettiSerp_DNS || '').toLowerCase().includes(searchTerm)
+  );
+
   if (loading) return null;
 
   return (
     <Layout>
-      <Box sx={{ pl: "-100x", pr: 3 }}>
-        <ProjectGrid projects={dati} onProjectUpdate={()=>{
+      <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+        <SearchBar onSearch={handleSearch} />
+      </Box>
+      <Box sx={{ pl: 2, pr: 3 }}>
+        <ProjectGrid projects={filteredProjects} onProjectUpdate={() => {
           loadDati(); // Ricarica i dati dopo l'aggiornamento di un progetto
         }} />
         <Typography sx={{ mt: 2 }} variant="body2">
@@ -107,8 +109,6 @@ const Homepage = () => {
         <Typography sx={{ mt: 1 }} variant="body2">
           URLs caricati: {dati.length}
         </Typography>
-
-       
       </Box>
     </Layout>
   );

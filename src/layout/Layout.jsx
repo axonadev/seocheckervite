@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import SideMenu from "../components/SideMenu";
 import Fab from "../components/Fab";
-import SearchBar from "../components/SearchBar/SearchBar";
-import { Box, private_excludeVariablesFromRoot } from "@mui/material";
+import { Box } from "@mui/material";
 import { LoginByToken } from "../utility/CallLogin";
 import { login } from "../store/storeLogin";
 import { useDispatch } from "react-redux";
@@ -15,11 +14,8 @@ import Footer from "../components/Footer";
 
 const Layout = ({ children }) => {
   const naviga = useNavigate();
-
   const { dimensions } = useDevice();
-
   const sessionToken = localStorage.getItem("axo_token");
-
   const dispatch = useDispatch();
 
   const getLogin = async () => {
@@ -40,20 +36,19 @@ const Layout = ({ children }) => {
     <Box sx={{ display: 'flex' }}>
       <Header />
       <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <SideMenu />
-      <Box
-
-        sx={{
-         marginLeft :  "60px",
-         marginTop : "60px",
-
-          
-          backgroundColor: '#FAFBFC'
-        }}
-      >
-        {children}
+        <SideMenu />
+        <Box
+          sx={{
+           marginLeft :  "60px",
+           marginTop : "60px",
+           backgroundColor: '#FAFBFC',
+           p: 2,
+           flexGrow: 1
+          }}
+        >
+          {children}
+        </Box>
       </Box>
-    </Box>
     </Box>
   );
 };

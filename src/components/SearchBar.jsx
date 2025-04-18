@@ -1,11 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Paper, InputBase, IconButton } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
 const SearchBar = ({ onSearch }) => {
+  const [searchInput, setSearchInput] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSearch(searchInput);
+  };
+
+  const handleChange = (e) => {
+    setSearchInput(e.target.value);
+    onSearch(e.target.value); // For real-time search
+  };
+
   return (
     <Paper
       component="form"
+      onSubmit={handleSubmit}
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -19,6 +32,7 @@ const SearchBar = ({ onSearch }) => {
       }}
     >
       <IconButton 
+        type="submit"
         sx={{ 
           p: '10px', 
           color: '#673ab7',
@@ -39,7 +53,10 @@ const SearchBar = ({ onSearch }) => {
         }}
         placeholder="Ricerca progetti"
         inputProps={{ 'aria-label': 'ricerca progetti' }}
-        onChange={(e) => onSearch(e.target.value)}
+        value={searchInput}
+        onChange={handleChange}
+        onFocus={(e) => e.target.placeholder = ''}
+        onBlur={(e) => e.target.placeholder = 'Ricerca progetti'}
       />
     </Paper>
   );
