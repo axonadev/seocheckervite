@@ -9,12 +9,15 @@ import AddIcon from '@mui/icons-material/Add';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import KeyIcon from '@mui/icons-material/Key';
 import PeopleIcon from '@mui/icons-material/People';
-import DonutLargeIcon from '@mui/icons-material/DonutLarge';
 import Layout from '../layout/Layout';
 import useEnv from '../hooks/useEnv';
 import { FormatDate } from '../utility/FormatDate';
 import Loader from '../components/Loader';
-import { Chart } from "react-google-charts";
+
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const ProjectDetail = () => {
   const { id } = useParams();
@@ -54,9 +57,14 @@ const ProjectDetail = () => {
           setKeywords([]);
         } else {
           const keywordsData = await keywordsResponse.json();
+          console.log("keywordsData", keywordsData);
+
           const keywordsWithId = (keywordsData?.Itemset?.v_keywords || []).map((kw, index) => ({
             id: kw.IDOBJ || index,
-            ...kw
+            KeywordSerp_Keyword: kw.KeywordSerp_Keyword || kw.keyword || kw.Keyword || "",
+            KeywordSerp_Posizione: kw.KeywordSerp_Posizione || kw.posizione || kw.Posizione || "",
+            KeywordSerp_Variazione: kw.KeywordSerp_Variazione || kw.variazione || kw.Variazione || "",
+            KeywordSerp_URL: kw.urlkey || kw.KeywordSerp_URL || kw.url || kw.URL || "",
           }));
           setKeywords(keywordsWithId);
           setKeywordsGraphics(keywordsData.Itemset.v_graphicdata || []);
@@ -78,7 +86,7 @@ const ProjectDetail = () => {
       setError("Project ID or token is missing.");
       setLoading(false);
     }
-  }, [id]);
+  }, [id, token, SERVERAPI]);
 
   const handleBackClick = () => {
     navigate(-1);
@@ -91,7 +99,19 @@ const ProjectDetail = () => {
   const keywordColumns = [
     { field: 'KeywordSerp_Keyword', headerName: 'Keywords', flex: 1, minWidth: 200 },
     { field: 'KeywordSerp_Posizione', headerName: 'Posizione', width: 100, align: 'center', headerAlign: 'center' },
-    { field: 'KeywordSerp_Variazione', headerName: 'Variazione', width: 100, align: 'center', headerAlign: 'center', valueGetter: (value) => value || '-' },
+    {
+      field: 'KeywordSerp_Variazione',
+      headerName: 'Variazione',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      valueGetter: (value, row) => {
+        if (value === -999 || value === "-999" || value == null) {
+          return '-';
+        }
+        return value;
+      }
+    },
     { field: 'KeywordSerp_URL', headerName: 'URL', flex: 1, minWidth: 250 },
   ];
 
@@ -125,13 +145,83 @@ const ProjectDetail = () => {
     );
   }
 
-  const chartData = {
+  const positionData = {
     pos1_10: keywords.filter(k => k.KeywordSerp_Posizione >= 1 && k.KeywordSerp_Posizione <= 10).length,
     pos11_20: keywords.filter(k => k.KeywordSerp_Posizione >= 11 && k.KeywordSerp_Posizione <= 20).length,
     pos21_50: keywords.filter(k => k.KeywordSerp_Posizione >= 21 && k.KeywordSerp_Posizione <= 50).length,
     pos_gt_50: keywords.filter(k => k.KeywordSerp_Posizione > 50).length,
+    pos_undefined: keywords.filter(k => k.KeywordSerp_Posizione == null || k.KeywordSerp_Posizione === "" || k.KeywordSerp_Posizione <= 0).length,
   };
-  const totalKeywordsInChart = chartData.pos1_10 + chartData.pos11_20 + chartData.pos21_50 + chartData.pos_gt_50;
+  const totalKeywordsInChart = keywords.length;
+
+  const pieChartData = {
+    labels: [
+      `Pos. 1-10 (${positionData.pos1_10})`,
+      `Pos. 11-20 (${positionData.pos11_20})`,
+      `Pos. 21-50 (${positionData.pos21_50})`,
+      `Pos. > 50 (${positionData.pos_gt_50})`,
+      `Non definite (${positionData.pos_undefined})`
+    ],
+    datasets: [
+      {
+        label: '% Presenza URL',
+        data: [
+          positionData.pos1_10,
+          positionData.pos11_20,
+          positionData.pos21_50,
+          positionData.pos_gt_50,
+          positionData.pos_undefined
+        ],
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(255, 206, 86, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(153, 102, 255, 0.6)'
+        ],
+        borderColor: [
+          'rgba(75, 192, 192, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(153, 102, 255, 1)'
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const pieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          boxWidth: 12,
+          padding: 15,
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            let label = context.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed !== null) {
+              const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+              const value = context.parsed;
+              const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+              label += `${value} (${percentage})`;
+            }
+            return label;
+          }
+        }
+      }
+    },
+    cutout: '60%',
+  };
 
   return (
     <Layout>
@@ -211,44 +301,22 @@ const ProjectDetail = () => {
 
           <Grid item xs={12} md={4}>
             <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>% Presenza url in pagina</Typography>
-           
-
-           
-
-            <Chart
-                chartType="PieChart"
-                data={keywordsGraphics}
-                options={{
-                    pieHole: 0.4,
-                    is3D: false,
-                    colors: ["lightgreen", "orange", "red", "blue"],
-                    legend: { position: "bottom" },
-                }}
-                width={"100%"}
-                height={"300px"}
-            />
-              <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: 200, height: 200, border: '1px dashed grey', borderRadius: '50%', mb: 2 }}>
-                <DonutLargeIcon sx={{ fontSize: 80, color: 'lightgrey' }} />
-                <Typography sx={{ position: 'absolute' }}>{totalKeywordsInChart}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Box sx={{ width: 12, height: 12, bgcolor: 'lightgreen' }} />
-                  <Typography variant="caption">Pos. 1-10 ({chartData.pos1_10})</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Box sx={{ width: 12, height: 12, bgcolor: 'orange' }} />
-                  <Typography variant="caption">Pos. 11-20 ({chartData.pos11_20})</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Box sx={{ width: 12, height: 12, bgcolor: 'red' }} />
-                  <Typography variant="caption">Pos. 20-50 ({chartData.pos21_50})</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Box sx={{ width: 12, height: 12, bgcolor: 'blue' }} />
-                  <Typography variant="caption">Pos. &gt; 50 ({chartData.pos_gt_50})</Typography>
-                </Box>
+              <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>% Presenza url in pagina</Typography>
+              <Box sx={{ position: 'relative', height: '300px', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Pie data={pieChartData} options={pieChartOptions} />
+                <Typography
+                  sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    fontSize: '1.5rem',
+                    fontWeight: 'bold',
+                    color: 'text.secondary'
+                  }}
+                >
+                  {totalKeywordsInChart}
+                </Typography>
               </Box>
             </Paper>
           </Grid>
