@@ -39,6 +39,7 @@ const ProjectDetail = () => {
   const [addKeywordAnchorEl, setAddKeywordAnchorEl] = useState(null);
   const [newKeywordInput, setNewKeywordInput] = useState('');
   const [exportDateAnchorEl, setExportDateAnchorEl] = useState(null);
+  const [uniqueExtractionDates, setUniqueExtractionDates] = useState([]);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -64,6 +65,7 @@ const ProjectDetail = () => {
           console.error(`HTTP error fetching keywords! status: ${keywordsResponse.status}`);
           setKeywords([]);
           setKeywordsGraphics([]);
+          setUniqueExtractionDates([]);
         } else {
           const keywordsData = await keywordsResponse.json();
           console.log("keywordsData", keywordsData);
@@ -76,6 +78,17 @@ const ProjectDetail = () => {
             KeywordSerp_URL: kw.urlkey || kw.KeywordSerp_URL || kw.url || kw.URL || "",
           }));
           setKeywords(keywordsWithId);
+
+          // Log the raw v_keywords array before processing
+          console.log("Raw v_keywords data:", keywordsData?.Itemset?.v_keywords); // <-- Add this log
+
+          // Extract and sort unique extraction dates from keywords data
+          const dates = keywordsData?.Itemset?.v_keywords 
+            ?.map(item => item.dataestrazione) // <-- Use lowercase field name
+            .filter((date, index, self) => date && self.indexOf(date) === index)
+            .sort((a, b) => new Date(b) - new Date(a));
+          setUniqueExtractionDates(dates || []);
+          console.log("Unique Extraction Dates from v_keywords:", dates); 
           setKeywordsGraphics(keywordsData?.Itemset?.v_graphicdata || []);
         }
 
@@ -85,6 +98,7 @@ const ProjectDetail = () => {
         setProject(null);
         setKeywords([]);
         setKeywordsGraphics([]);
+        setUniqueExtractionDates([]);
       } finally {
         setLoading(false);
       }
@@ -171,7 +185,7 @@ const ProjectDetail = () => {
     setExportDateAnchorEl(null);
   };
 
-  const handleExportCsvWithDate = (date) => {
+  const handleExportCsvWithDate = (dateString) => {
     if (!keywords || keywords.length === 0) {
       console.log("No keywords to export.");
       return;
@@ -179,13 +193,13 @@ const ProjectDetail = () => {
 
     const headers = ["Keyword", "Posizione", "Variazione", "URL"];
     const csvRows = [
-      headers.join(';'), // Header row with semicolons instead of commas
+      headers.join(';'),
       ...keywords.map(row => [
-        `"${(row.KeywordSerp_Keyword || '').replace(/"/g, '""')}"`, // Escape double quotes
+        `"${(row.KeywordSerp_Keyword || '').replace(/"/g, '""')}"`,
         row.KeywordSerp_Posizione ?? '',
         (row.KeywordSerp_Variazione === -999 || row.KeywordSerp_Variazione === "-999" || row.KeywordSerp_Variazione == null) ? '-' : row.KeywordSerp_Variazione ?? '',
-        `"${(row.KeywordSerp_URL || '').replace(/"/g, '""')}"` // Escape double quotes
-      ].join(';')) // Join with semicolons instead of commas
+        `"${(row.KeywordSerp_URL || '').replace(/"/g, '""')}"`
+      ].join(';'))
     ];
 
     const csvString = csvRows.join('\n');
@@ -194,7 +208,7 @@ const ProjectDetail = () => {
     const url = URL.createObjectURL(blob);
 
     link.setAttribute('href', url);
-    const selectedDate = date ? FormatDate(date, 'yyyyMMdd') : FormatDate(new Date(), 'yyyyMMdd');
+    const selectedDate = dateString ? FormatDate(new Date(dateString), 'yyyyMMdd') : FormatDate(new Date(), 'yyyyMMdd');
     const filename = `keywords_${project?.ProgettiSerp_Nome || 'export'}_${selectedDate}.csv`;
     link.setAttribute('download', filename);
     link.style.visibility = 'hidden';
@@ -390,22 +404,22 @@ const ProjectDetail = () => {
             </Box>
           </Grid>
 
-          {/* Right: Dates */}
-          <Grid item xs={12} md={4} sx={{ textAlign: 'right' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
-              <CalendarTodayIcon fontSize="small" />
-              <Typography variant="body2">Data inserimento:</Typography>
-            </Box>
-            <Typography variant="body1" fontWeight="bold">{FormatDate(project.dataInserimento, 'dd-MM-yyyy')}</Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1, mt: 0.5 }}>
-              <CalendarTodayIcon fontSize="small" />
-              <Typography variant="body2">Data ultimo report:</Typography>
-            </Box>
-            <Typography variant="body1" fontWeight="bold">{FormatDate(project.ProgettiSerp_UltimoReport || project.dataKeyword, 'dd-MM-yyyy')}</Typography>
-          </Grid>
-        </Grid>
+          
+                <Grid item xs={12} md={4} sx={{ textAlign: 'right' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                  <CalendarTodayIcon fontSize="small" />
+                  <Typography variant="body2">Data inserimento:</Typography>
+                </Box>
+                <Typography variant="body1" fontWeight="bold">{FormatDate(project.dataInserimento, 'dd-MM-yyyy')}</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1, mt: 0.5 }}>
+                  <CalendarTodayIcon fontSize="small" />
+                  <Typography variant="body2">Data ultimo report:</Typography>
+                </Box>
+                <Typography variant="body1" fontWeight="bold">{FormatDate(project.dataEstrazione || project.dataKeyword, 'dd-MM-yyyy')}</Typography>
+                </Grid>
+              </Grid>
 
-        {/* Main Content Grid */}
+              {/* Main Content Grid */}
         <Grid container spacing={3}>
           {/* Left Column: Keywords Table */}
           <Grid item xs={12} md={8}>
@@ -458,36 +472,23 @@ const ProjectDetail = () => {
                 <Typography variant="subtitle1" sx={{ p: 1, fontWeight: 'bold', textAlign: 'center' }}>
                   Seleziona la data di estrazione
                 </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
-                  {/* Sample dates - you would get these from your API */}
-                  <Button 
-                    variant="text" 
-                    onClick={() => handleExportCsvWithDate(new Date('2025-01-09'))}
-                    sx={{ justifyContent: 'flex-start', py: 1 }}
-                  >
-                    09-01-2025
-                  </Button>
-                  <Button 
-                    variant="text" 
-                    onClick={() => handleExportCsvWithDate(new Date('2024-12-10'))}
-                    sx={{ justifyContent: 'flex-start', py: 1 }}
-                  >
-                    10-12-2024
-                  </Button>
-                  <Button 
-                    variant="text" 
-                    onClick={() => handleExportCsvWithDate(new Date('2024-11-28'))}
-                    sx={{ justifyContent: 'flex-start', py: 1 }}
-                  >
-                    28-11-2024
-                  </Button>
-                  <Button 
-                    variant="text" 
-                    onClick={() => handleExportCsvWithDate(new Date('2024-10-13'))}
-                    sx={{ justifyContent: 'flex-start', py: 1 }}
-                  >
-                    13-10-2024
-                  </Button>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1, maxHeight: 200, overflowY: 'auto' }}>
+                  {uniqueExtractionDates.length > 0 ? (
+                    uniqueExtractionDates.map((dateStr) => (
+                      <Button
+                        key={dateStr}
+                        variant="text"
+                        onClick={() => handleExportCsvWithDate(dateStr)}
+                        sx={{ justifyContent: 'flex-start', py: 1 }}
+                      >
+                        {FormatDate(new Date(dateStr), 'dd-MM-yyyy')}
+                      </Button>
+                    ))
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 1 }}>
+                      Nessuna data disponibile.
+                    </Typography>
+                  )}
                 </Box>
               </Popover>
               
@@ -590,11 +591,10 @@ const ProjectDetail = () => {
                 />
               </Box>
             </Paper>
-          </Grid>
+          </Grid> {/* Closing tag for Left Column Grid item */}
 
           {/* Right Column: Pie Chart */}
-          <Grid item xs={12} md={4}>
-            {/* Ensure content is INSIDE the Paper component */}
+          <Grid item xs={12} md={4}> {/* Opening tag */}
             <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>% Presenza url in pagina</Typography>
               <Box sx={{ position: 'relative', height: '450px', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -613,9 +613,9 @@ const ProjectDetail = () => {
                   {totalKeywordsInChart}
                 </Typography>
               </Box>
-            </Paper> {/* Closing Paper tag */}
-          </Grid> {/* Closing Grid tag */}
-        </Grid>
+            </Paper>
+          </Grid> {/* Ensure this closing tag exists and corresponds to the <Grid item xs={12} md={4}> */}
+        </Grid> {/* Closing tag for Main Content Grid container */}
       </Box>
     </Layout>
   );

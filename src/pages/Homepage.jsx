@@ -44,7 +44,8 @@ const Homepage = () => {
       const formattedData = (data?.Itemset?.v_progettiserp || []).map(item => ({
         ...item,
         ProgettiSerp_Nome: item.ProgettiSerp_Nome || item.nome || `Progetto ${item.IDOBJ || ''}`,
-        ProgettiSerp_UltimoReport: item.ProgettiSerp_UltimoReport || item.dataKeyword || item.dataInserimento || new Date().toISOString(),
+        // Prioritize dataKeyword, then dataEstrazione, then ProgettiSerp_UltimoReport, then dataInserimento
+        ProgettiSerp_UltimoReport: item.dataKeyword || item.dataEstrazione || item.ProgettiSerp_UltimoReport || item.dataInserimento || new Date().toISOString(), 
         domain: item.ProgettiSerp_DNS || item.domain || item.url || item.dominio || '',
         keywords: item.totaleKeyword || item.keywords || item.parole_chiave || 0
       }));
