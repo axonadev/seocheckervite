@@ -16,6 +16,7 @@ import Layout from '../layout/Layout';
 import useEnv from '../hooks/useEnv';
 import { FormatDate } from '../utility/FormatDate';
 import Loader from '../components/Loader';
+import EditProjectPopup from '../components/EditProjectPopup';
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -46,6 +47,7 @@ const ProjectDetail = () => {
   const [exportPdfDateAnchorEl, setExportPdfDateAnchorEl] = useState(null);
   const [logoImageDataUrl, setLogoImageDataUrl] = useState(null);
   const [posizionamentoImageDataUrl, setPosizionamentoImageDataUrl] = useState(null);
+  const [editProjectAnchorEl, setEditProjectAnchorEl] = useState(null);
 
   useEffect(() => {
     fetch('/logo.png')
@@ -135,6 +137,30 @@ const ProjectDetail = () => {
       setLoading(false);
     }
   }, [id, token, SERVERAPI]);
+
+  const refetchProjectData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const projectUrl = `${SERVERAPI}/api/axo_sel/${token}/progettiserp/progettiserpsel/leggi/${id}`;
+      const projectResponse = await fetch(projectUrl);
+      if (!projectResponse.ok) {
+        throw new Error(`HTTP error! status: ${projectResponse.status}`);
+      }
+      const projectData = await projectResponse.json();
+
+      if (projectData?.Itemset?.v_progettiserp && projectData.Itemset.v_progettiserp.length > 0) {
+        setProject(projectData.Itemset.v_progettiserp[0]);
+      } else {
+        throw new Error('Project not found after update');
+      }
+    } catch (err) {
+      console.error("Error refetching project details:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleBackClick = () => {
     navigate(-1);
@@ -464,12 +490,27 @@ const ProjectDetail = () => {
     handleCloseExportPdfDate();
   };
 
+  const handleOpenEditProject = (event) => {
+    setEditProjectAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseEditProject = () => {
+    setEditProjectAnchorEl(null);
+  };
+
+  const handleProjectUpdated = (updatedProjectData) => {
+    setProject(updatedProjectData);
+    handleCloseEditProject();
+  };
+
   const openAddKeyword = Boolean(addKeywordAnchorEl);
   const addKeywordPopoverId = openAddKeyword ? 'add-keyword-popover' : undefined;
   const openExportDate = Boolean(exportDateAnchorEl);
   const exportDatePopoverId = openExportDate ? 'export-date-popover' : undefined;
   const openExportPdfDate = Boolean(exportPdfDateAnchorEl);
   const exportPdfDatePopoverId = openExportPdfDate ? 'export-pdf-date-popover' : undefined;
+  const openEditProject = Boolean(editProjectAnchorEl);
+  const editProjectPopoverId = openEditProject ? 'edit-project-popover' : undefined;
 
   const keywordColumns = [
     { field: 'KeywordSerp_Keyword', headerName: 'Keywords', flex: 1, minWidth: 200 },
@@ -598,15 +639,27 @@ const ProjectDetail = () => {
     cutout: '60%',
   };
 
- 
   return (
     <Layout showSearchBar={false}>
       <Box sx={{ p: 3 }}>
         <Grid container spacing={2} sx={{ mb: 3, alignItems: 'flex-start' }}>
           <Grid item xs={12} md={4}>
-            <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', '&:hover': { opacity: 0.8 } }}
+              onClick={handleOpenEditProject}
+              aria-describedby={editProjectPopoverId}
+            >
               {project.ProgettiSerp_Nome || "Unnamed Project"}
+              <EditIcon fontSize="inherit" sx={{ ml: 0.5, color: 'text.secondary' }} />
             </Typography>
+            <EditProjectPopup
+              project={project}
+              anchorEl={editProjectAnchorEl}
+              onClose={handleCloseEditProject}
+              onProjectUpdated={handleProjectUpdated}
+            />
             <Popover
               id={exportPdfDatePopoverId}
               open={openExportPdfDate}
