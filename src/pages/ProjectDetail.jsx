@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, IconButton, Paper, Grid, Select, MenuItem, FormControl, Avatar } from '@mui/material';
+import { Box, Typography, Button, IconButton, Paper, Grid, Select, MenuItem, FormControl, Avatar, Popover, TextField } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
@@ -10,6 +10,8 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import KeyIcon from '@mui/icons-material/Key';
 import PeopleIcon from '@mui/icons-material/People';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import DeleteIcon from '@mui/icons-material/Delete';
 import Layout from '../layout/Layout';
 import useEnv from '../hooks/useEnv';
 import { FormatDate } from '../utility/FormatDate';
@@ -34,6 +36,8 @@ const ProjectDetail = () => {
   const [error, setError] = useState(null);
   const [searchEngine, setSearchEngine] = useState('google.it - Italia');
   const [projectLogo, setProjectLogo] = useState(null);
+  const [addKeywordAnchorEl, setAddKeywordAnchorEl] = useState(null);
+  const [newKeywordInput, setNewKeywordInput] = useState('');
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -53,7 +57,7 @@ const ProjectDetail = () => {
           throw new Error('Project not found');
         }
 
-        const keywordsUrl = `${SERVERAPI}/api/axo_sel/${token}/progettiserp/progettiserpsel/leggiKeyWords/${id}`;    //da rimettere ${id
+        const keywordsUrl = `${SERVERAPI}/api/axo_sel/${token}/progettiserp/progettiserpsel/leggiKeyWords/${id}`;
         const keywordsResponse = await fetch(keywordsUrl);
         if (!keywordsResponse.ok) {
           console.error(`HTTP error fetching keywords! status: ${keywordsResponse.status}`);
@@ -128,6 +132,70 @@ const ProjectDetail = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  const handleOpenAddKeyword = (event) => {
+    setAddKeywordAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseAddKeyword = () => {
+    setAddKeywordAnchorEl(null);
+    setNewKeywordInput('');
+  };
+
+  const handleAddKeyword = () => {
+    if (newKeywordInput.trim()) {
+      const newKeyword = {
+        id: `temp-${Date.now()}`,
+        KeywordSerp_Keyword: newKeywordInput.trim(),
+        KeywordSerp_Posizione: null,
+        KeywordSerp_Variazione: null,
+        KeywordSerp_URL: '',
+      };
+      setKeywords(prevKeywords => [...prevKeywords, newKeyword]);
+      handleCloseAddKeyword();
+      console.log("New keyword added (frontend only):", newKeyword);
+    }
+  };
+
+  const handleDeleteKeyword = (keywordId) => {
+    setKeywords(prevKeywords => prevKeywords.filter(kw => kw.id !== keywordId));
+    console.log("Keyword deleted (frontend only):", keywordId);
+  };
+
+  const handleExportCsv = () => {
+    if (!keywords || keywords.length === 0) {
+      console.log("No keywords to export.");
+      return;
+    }
+
+    const headers = ["Keyword", "Posizione", "Variazione", "URL"];
+    const csvRows = [
+      headers.join(','), // Header row
+      ...keywords.map(row => [
+        `"${(row.KeywordSerp_Keyword || '').replace(/"/g, '""')}"`, // Escape double quotes
+        row.KeywordSerp_Posizione ?? '',
+        (row.KeywordSerp_Variazione === -999 || row.KeywordSerp_Variazione === "-999" || row.KeywordSerp_Variazione == null) ? '-' : row.KeywordSerp_Variazione ?? '',
+        `"${(row.KeywordSerp_URL || '').replace(/"/g, '""')}"` // Escape double quotes
+      ].join(','))
+    ];
+
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    const filename = `keywords_${project?.ProgettiSerp_Nome || 'export'}_${FormatDate(new Date(), 'yyyyMMdd')}.csv`;
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const openAddKeyword = Boolean(addKeywordAnchorEl);
+  const addKeywordPopoverId = openAddKeyword ? 'add-keyword-popover' : undefined;
 
   const keywordColumns = [
     { field: 'KeywordSerp_Keyword', headerName: 'Keywords', flex: 1, minWidth: 200 },
@@ -261,11 +329,8 @@ const ProjectDetail = () => {
       <Box sx={{ p: 3 }}>
         {/* Top Section */}
         <Grid container spacing={2} sx={{ mb: 3, alignItems: 'flex-start' }}>
-          {/* Left: Back Button, Project Name, Domain */}
+          {/* Left: Project Name */}
           <Grid item xs={12} md={4}>
-            <Button startIcon={<ArrowBackIcon />} onClick={handleBackClick}>
-              Indietro
-            </Button>
             <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <EditIcon fontSize="small" sx={{ cursor: 'pointer' }} />
               {project.ProgettiSerp_Nome || "Unnamed Project"}
@@ -347,12 +412,97 @@ const ProjectDetail = () => {
                       <MenuItem value="google.it - Italia">google.it - Italia</MenuItem>
                     </Select>
                   </FormControl>
-                  <IconButton size="small"><SaveIcon /></IconButton>
+                  <IconButton size="small" onClick={handleExportCsv}><SaveIcon /></IconButton>
                   <IconButton size="small"><EditIcon /></IconButton>
-                  <IconButton size="small"><AddIcon /></IconButton>
+                  <IconButton size="small" onClick={handleOpenAddKeyword} aria-describedby={addKeywordPopoverId}><AddIcon /></IconButton>
                 </Box>
               </Box>
-              <Box sx={{ height: 500, width: '100%' }}>
+              {/* Popover for adding keywords */}
+              <Popover
+                id={addKeywordPopoverId}
+                open={openAddKeyword}
+                anchorEl={addKeywordAnchorEl}
+                onClose={handleCloseAddKeyword}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                PaperProps={{
+                  sx: { width: 400, borderRadius: 2 } // Increased width from 300 to 400
+                }}
+              >
+                <Box sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <IconButton sx={{ backgroundColor: 'primary.main', color: 'white', mr: 1, p: '4px' }}>
+                      <AddCircleOutlineIcon fontSize="small" />
+                    </IconButton>
+                    <Typography variant="h6">Nuova Key</Typography>
+                  </Box>
+                  <TextField
+                    label="Keyword"
+                    variant="filled"
+                    size="small"
+                    fullWidth
+                    value={newKeywordInput}
+                    onChange={(e) => setNewKeywordInput(e.target.value)}
+                    onKeyPress={(e) => { if (e.key === 'Enter') handleAddKeyword(); }}
+                    sx={{ mb: 1, backgroundColor: 'rgba(0, 0, 0, 0.06)' }}
+                    InputProps={{ disableUnderline: true }}
+                  />
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                    Keywords inserite nel progetto
+                  </Typography>
+                  <Box sx={{ height: 200, overflowY: 'auto', mb: 2, border: '1px solid #eee', borderRadius: 1, p: 1, bgcolor: '#fff' }}>
+                    {keywords.length > 0 ? (
+                      keywords.map((kw) => (
+                        <Box
+                          key={kw.id}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            py: 0.5,
+                            borderBottom: '1px solid #f5f5f5',
+                            '&:last-child': { borderBottom: 'none' }
+                          }}
+                        >
+                          <Typography variant="body2" sx={{ flexGrow: 1, mr: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {kw.KeywordSerp_Keyword}
+                          </Typography>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDeleteKeyword(kw.id)}
+                            aria-label="delete keyword"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      ))
+                    ) : (
+                      <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>
+                        Nessuna keyword presente.
+                      </Typography>
+                    )}
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button
+                      variant="contained"
+                      onClick={handleAddKeyword}
+                      size="small"
+                      startIcon={<AddIcon />}
+                      sx={{ borderRadius: '16px' }}
+                    >
+                      Aggiungi
+                    </Button>
+                  </Box>
+                </Box>
+              </Popover>
+              {/* End Popover */}
+              <Box sx={{ height: 600, width: '100%' }}>
                 <DataGrid
                   rows={keywords}
                   columns={keywordColumns}
@@ -360,7 +510,8 @@ const ProjectDetail = () => {
                   initialState={{
                     pagination: { paginationModel: { pageSize: 10 } },
                   }}
-                  density="compact"
+                  density="standard"
+                  rowHeight={43}
                   getRowId={(row) => row.id}
                 />
               </Box>
@@ -369,6 +520,7 @@ const ProjectDetail = () => {
 
           {/* Right Column: Pie Chart */}
           <Grid item xs={12} md={4}>
+            {/* Ensure content is INSIDE the Paper component */}
             <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>% Presenza url in pagina</Typography>
               <Box sx={{ position: 'relative', height: '450px', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -387,8 +539,8 @@ const ProjectDetail = () => {
                   {totalKeywordsInChart}
                 </Typography>
               </Box>
-            </Paper>
-          </Grid>
+            </Paper> {/* Closing Paper tag */}
+          </Grid> {/* Closing Grid tag */}
         </Grid>
       </Box>
     </Layout>
