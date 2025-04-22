@@ -38,6 +38,7 @@ const ProjectDetail = () => {
   const [projectLogo, setProjectLogo] = useState(null);
   const [addKeywordAnchorEl, setAddKeywordAnchorEl] = useState(null);
   const [newKeywordInput, setNewKeywordInput] = useState('');
+  const [exportDateAnchorEl, setExportDateAnchorEl] = useState(null);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -162,7 +163,15 @@ const ProjectDetail = () => {
     console.log("Keyword deleted (frontend only):", keywordId);
   };
 
-  const handleExportCsv = () => {
+  const handleOpenExportDate = (event) => {
+    setExportDateAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseExportDate = () => {
+    setExportDateAnchorEl(null);
+  };
+
+  const handleExportCsvWithDate = (date) => {
     if (!keywords || keywords.length === 0) {
       console.log("No keywords to export.");
       return;
@@ -170,13 +179,13 @@ const ProjectDetail = () => {
 
     const headers = ["Keyword", "Posizione", "Variazione", "URL"];
     const csvRows = [
-      headers.join(','), // Header row
+      headers.join(';'), // Header row with semicolons instead of commas
       ...keywords.map(row => [
         `"${(row.KeywordSerp_Keyword || '').replace(/"/g, '""')}"`, // Escape double quotes
         row.KeywordSerp_Posizione ?? '',
         (row.KeywordSerp_Variazione === -999 || row.KeywordSerp_Variazione === "-999" || row.KeywordSerp_Variazione == null) ? '-' : row.KeywordSerp_Variazione ?? '',
         `"${(row.KeywordSerp_URL || '').replace(/"/g, '""')}"` // Escape double quotes
-      ].join(','))
+      ].join(';')) // Join with semicolons instead of commas
     ];
 
     const csvString = csvRows.join('\n');
@@ -185,17 +194,21 @@ const ProjectDetail = () => {
     const url = URL.createObjectURL(blob);
 
     link.setAttribute('href', url);
-    const filename = `keywords_${project?.ProgettiSerp_Nome || 'export'}_${FormatDate(new Date(), 'yyyyMMdd')}.csv`;
+    const selectedDate = date ? FormatDate(date, 'yyyyMMdd') : FormatDate(new Date(), 'yyyyMMdd');
+    const filename = `keywords_${project?.ProgettiSerp_Nome || 'export'}_${selectedDate}.csv`;
     link.setAttribute('download', filename);
     link.style.visibility = 'hidden';
 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    handleCloseExportDate();
   };
 
   const openAddKeyword = Boolean(addKeywordAnchorEl);
   const addKeywordPopoverId = openAddKeyword ? 'add-keyword-popover' : undefined;
+  const openExportDate = Boolean(exportDateAnchorEl);
+  const exportDatePopoverId = openExportDate ? 'export-date-popover' : undefined;
 
   const keywordColumns = [
     { field: 'KeywordSerp_Keyword', headerName: 'Keywords', flex: 1, minWidth: 200 },
@@ -412,11 +425,72 @@ const ProjectDetail = () => {
                       <MenuItem value="google.it - Italia">google.it - Italia</MenuItem>
                     </Select>
                   </FormControl>
-                  <IconButton size="small" onClick={handleExportCsv}><SaveIcon /></IconButton>
+                  <IconButton 
+                    size="small" 
+                    onClick={handleOpenExportDate}
+                    aria-describedby={exportDatePopoverId}
+                  >
+                    <SaveIcon />
+                  </IconButton>
                   <IconButton size="small"><EditIcon /></IconButton>
                   <IconButton size="small" onClick={handleOpenAddKeyword} aria-describedby={addKeywordPopoverId}><AddIcon /></IconButton>
                 </Box>
               </Box>
+              
+              {/* Export Date Popover */}
+              <Popover
+                id={exportDatePopoverId}
+                open={openExportDate}
+                anchorEl={exportDateAnchorEl}
+                onClose={handleCloseExportDate}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                PaperProps={{
+                  sx: { width: 200, p: 1, borderRadius: 1 }
+                }}
+              >
+                <Typography variant="subtitle1" sx={{ p: 1, fontWeight: 'bold', textAlign: 'center' }}>
+                  Seleziona la data di estrazione
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
+                  {/* Sample dates - you would get these from your API */}
+                  <Button 
+                    variant="text" 
+                    onClick={() => handleExportCsvWithDate(new Date('2025-01-09'))}
+                    sx={{ justifyContent: 'flex-start', py: 1 }}
+                  >
+                    09-01-2025
+                  </Button>
+                  <Button 
+                    variant="text" 
+                    onClick={() => handleExportCsvWithDate(new Date('2024-12-10'))}
+                    sx={{ justifyContent: 'flex-start', py: 1 }}
+                  >
+                    10-12-2024
+                  </Button>
+                  <Button 
+                    variant="text" 
+                    onClick={() => handleExportCsvWithDate(new Date('2024-11-28'))}
+                    sx={{ justifyContent: 'flex-start', py: 1 }}
+                  >
+                    28-11-2024
+                  </Button>
+                  <Button 
+                    variant="text" 
+                    onClick={() => handleExportCsvWithDate(new Date('2024-10-13'))}
+                    sx={{ justifyContent: 'flex-start', py: 1 }}
+                  >
+                    13-10-2024
+                  </Button>
+                </Box>
+              </Popover>
+              
               {/* Popover for adding keywords */}
               <Popover
                 id={addKeywordPopoverId}
@@ -432,7 +506,7 @@ const ProjectDetail = () => {
                   horizontal: 'right',
                 }}
                 PaperProps={{
-                  sx: { width: 400, borderRadius: 2 } // Increased width from 300 to 400
+                  sx: { width: 400, borderRadius: 2 }
                 }}
               >
                 <Box sx={{ p: 2 }}>
