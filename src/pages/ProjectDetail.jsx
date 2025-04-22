@@ -17,6 +17,9 @@ import useEnv from '../hooks/useEnv';
 import { FormatDate } from '../utility/FormatDate';
 import Loader from '../components/Loader';
 
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
@@ -40,6 +43,7 @@ const ProjectDetail = () => {
   const [newKeywordInput, setNewKeywordInput] = useState('');
   const [exportDateAnchorEl, setExportDateAnchorEl] = useState(null);
   const [uniqueExtractionDates, setUniqueExtractionDates] = useState([]);
+  const [exportPdfDateAnchorEl, setExportPdfDateAnchorEl] = useState(null);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -219,10 +223,165 @@ const ProjectDetail = () => {
     handleCloseExportDate();
   };
 
+  const handleOpenExportPdfDate = (event) => {
+    setExportPdfDateAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseExportPdfDate = () => {
+    setExportPdfDateAnchorEl(null);
+  };
+
+  const handleExportPdfWithDate = (dateString) => {
+    if (!keywords || keywords.length === 0) {
+      console.log("No keywords to export for PDF.");
+      return;
+    }
+
+    // Filter keywords for positions 1-10
+    const filteredKeywords = keywords.filter(kw => {
+      const position = kw.KeywordSerp_Posizione;
+      return typeof position === 'number' && position >= 1 && position <= 10; 
+    });
+
+    if (filteredKeywords.length === 0) {
+      console.log("No keywords found in positions 1-10 to export for PDF."); 
+      alert("Nessuna keyword trovata nelle posizioni 1-10 per questa data."); 
+      handleCloseExportPdfDate();
+      return;
+    }
+
+    // Change orientation back to 'landscape'
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' }); 
+    const selectedDate = dateString ? FormatDate(new Date(dateString), 'dd-MM-yyyy') : FormatDate(new Date(), 'dd-MM-yyyy');
+    const filenameBase = `keywords_${project?.ProgettiSerp_Nome || 'export'}_${selectedDate}_pos1-10`;
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 15;
+
+    // --- Header Function ---
+    const drawHeader = (data) => {
+      doc.setFontSize(18);
+      doc.setTextColor(120, 180, 70); // Verde AM Partners
+      doc.setFont(undefined, 'bold');
+      doc.text("AM", margin, margin + 5);
+      doc.setFontSize(6);
+      doc.setTextColor(100, 100, 100); // Grigio per slogan
+      doc.setFont(undefined, 'normal');
+      // Simple box around AM
+      doc.setDrawColor(120, 180, 70);
+      doc.setLineWidth(0.5);
+      doc.rect(margin - 1, margin -1 , 8, 8); // Adjust size/position as needed
+
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100); // Grigio per slogan
+      doc.text("PARTNERS", margin + 8, margin + 5); // Position next to AM
+      doc.setFontSize(6);
+      doc.text("DIGITAL | CREATIVE | AGENCY", margin + 8, margin + 8); // Position below PARTNERS
+    };
+
+    // --- Footer Function ---
+    const drawFooter = (data) => {
+      const footerY = pageHeight - margin - 5; // Position higher
+      const colWidth = (pageWidth - 2 * margin) / 4; // Adjust width based on margins
+      doc.setFontSize(7); // Smaller font size
+      doc.setTextColor(80, 80, 80);
+      doc.setLineWidth(0.2);
+      doc.setDrawColor(120, 180, 70); // Line color
+      doc.line(margin, footerY - 2, pageWidth - margin, footerY - 2); // Line above footer
+
+      // Colonna 1: HUB
+      doc.setFont(undefined, 'bold');
+      doc.text("HUB", margin, footerY + 2); // Adjusted Y
+      doc.setFont(undefined, 'normal');
+      doc.text("VIA COSIMO DEL FRATE, 16", margin, footerY + 5); // Adjusted Y
+      doc.text("LEGNANO (MI)", margin, footerY + 8); // Adjusted Y
+
+      // Colonna 2: CUBE
+      const col2X = margin + colWidth;
+      doc.setFont(undefined, 'bold');
+      doc.text("CUBE [CORE] ROOM", col2X, footerY + 2); // Adjusted Y
+      doc.setFont(undefined, 'normal');
+      doc.text("VIA MONTE NAPOLEONE, 22", col2X, footerY + 5); // Adjusted Y
+      doc.text("MILANO", col2X, footerY + 8); // Adjusted Y
+
+      // Colonna 3: SEDE LEGALE
+      const col3X = margin + colWidth * 2;
+      doc.setFont(undefined, 'bold');
+      doc.text("SEDE LEGALE", col3X, footerY + 2); // Adjusted Y
+      doc.setFont(undefined, 'normal');
+      doc.text("VIA I BOSSI, 46", col3X, footerY + 5); // Adjusted Y
+      doc.text("RESCALDINA (MI)", col3X, footerY + 8); // Adjusted Y
+
+      // Colonna 4: Contatti
+      const col4X = margin + colWidth * 3;
+      doc.setFont(undefined, 'bold');
+      doc.text("www.ampartners.info", col4X, footerY + 2); // Adjusted Y
+      doc.setFont(undefined, 'normal');
+      doc.text("info@ampartners.info", col4X, footerY + 5); // Adjusted Y
+
+      // Page number (optional)
+      // doc.setFontSize(8);
+      // doc.text(`Pagina ${data.pageNumber}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+    };
+
+
+    // --- Define Table Columns and Rows ---
+    const tableColumn = ["PAROLA CHIAVE", "POSIZIONE SU GOOGLE", "PAGINA SITO POSIZIONATA"]; // Updated columns
+    const tableRows = [];
+
+    filteredKeywords.forEach(kw => {
+      const keywordData = [
+        kw.KeywordSerp_Keyword || '',
+        kw.KeywordSerp_Posizione ?? '', // Position will always be 1-10 here
+        // Removed Variazione
+        kw.KeywordSerp_URL || ''
+      ];
+      tableRows.push(keywordData);
+    });
+
+    // --- Generate Table with Header/Footer on each page ---
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: margin + 15, // Start table below header space
+      theme: 'plain', // Match image style (no grid lines)
+      styles: {
+        fontSize: 8,
+        cellPadding: 1.5,
+        valign: 'middle',
+      },
+      headStyles: {
+        fillColor: false, // No background color for header
+        textColor: [0, 0, 0], // Black text
+        fontStyle: 'bold',
+        fontSize: 9,
+        halign: 'left',
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Keyword
+        1: { cellWidth: 30, halign: 'center' }, // Position (Centered)
+        2: { cellWidth: 'auto', halign: 'left' } // URL
+      },
+      didDrawPage: (data) => {
+        // Draw header and footer on every page the table spans
+        drawHeader(data);
+        drawFooter(data);
+      },
+      // Margins might need adjustment for landscape, but these relative values should work
+      margin: { top: margin + 10, bottom: margin + 15, left: margin, right: margin } 
+    });
+
+    doc.save(`${filenameBase}.pdf`);
+    handleCloseExportPdfDate();
+  };
+
   const openAddKeyword = Boolean(addKeywordAnchorEl);
   const addKeywordPopoverId = openAddKeyword ? 'add-keyword-popover' : undefined;
   const openExportDate = Boolean(exportDateAnchorEl);
   const exportDatePopoverId = openExportDate ? 'export-date-popover' : undefined;
+  const openExportPdfDate = Boolean(exportPdfDateAnchorEl);
+  const exportPdfDatePopoverId = openExportPdfDate ? 'export-pdf-date-popover' : undefined;
 
   const keywordColumns = [
     { field: 'KeywordSerp_Keyword', headerName: 'Keywords', flex: 1, minWidth: 200 },
@@ -359,9 +518,49 @@ const ProjectDetail = () => {
           {/* Left: Project Name */}
           <Grid item xs={12} md={4}>
             <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <EditIcon fontSize="small" sx={{ cursor: 'pointer' }} />
               {project.ProgettiSerp_Nome || "Unnamed Project"}
             </Typography>
+            {/* PDF Export Date Popover */}
+            <Popover
+              id={exportPdfDatePopoverId}
+              open={openExportPdfDate}
+              anchorEl={exportPdfDateAnchorEl}
+              onClose={handleCloseExportPdfDate}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'left',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'left',
+              }}
+              PaperProps={{
+                sx: { width: 200, p: 1, borderRadius: 1 }
+              }}
+            >
+              <Typography variant="subtitle1" sx={{ p: 1, fontWeight: 'bold', textAlign: 'center' }}>
+                Esporta PDF per data
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1, maxHeight: 200, overflowY: 'auto' }}>
+                {uniqueExtractionDates.length > 0 ? (
+                  uniqueExtractionDates.map((dateStr) => (
+                    <Button
+                      key={dateStr}
+                      variant="text"
+                      onClick={() => handleExportPdfWithDate(dateStr)}
+                      sx={{ justifyContent: 'flex-start', py: 1 }}
+                    >
+                      {FormatDate(new Date(dateStr), 'dd-MM-yyyy')}
+                    </Button>
+                  ))
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 1 }}>
+                    Nessuna data disponibile.
+                  </Typography>
+                )}
+              </Box>
+            </Popover>
+            {/* End PDF Export Date Popover */}
           </Grid>
 
           {/* Center: Logo and Team */}
@@ -400,7 +599,7 @@ const ProjectDetail = () => {
             {/* Placeholder for Team Icon */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
               
-            
+              
             </Box>
           </Grid>
 
@@ -446,7 +645,13 @@ const ProjectDetail = () => {
                   >
                     <SaveIcon />
                   </IconButton>
-                  <IconButton size="small"><EditIcon /></IconButton>
+                  <IconButton 
+                    size="small" 
+                    onClick={handleOpenExportPdfDate}
+                    aria-describedby={exportPdfDatePopoverId}
+                  >
+                    <EditIcon />
+                  </IconButton>
                   <IconButton size="small" onClick={handleOpenAddKeyword} aria-describedby={addKeywordPopoverId}><AddIcon /></IconButton>
                 </Box>
               </Box>
