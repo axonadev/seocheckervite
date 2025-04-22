@@ -3,13 +3,15 @@ import { Box, Typography } from "@mui/material";
 import Layout from "../layout/Layout";
 import ProjectGrid from "../components/ProjectGrid/ProjectGrid";
 import SearchBar from "../components/SearchBar";
+import useEnv from "../hooks/useEnv"; // Assicurati di avere questo hook per l'uso dell'ambiente
 
 const Homepage = () => {
   const projects = Array.from({ length: 12 }, (_, i) => ({
     name: `Project ${i + 1}`,
     domain: `example${i + 1}.com`,
-    lastReport: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000)
-      .toLocaleDateString("it-IT"),
+    lastReport: new Date(
+      Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000
+    ).toLocaleDateString("it-IT"),
     keywords: Math.floor(Math.random() * 1000),
   }));
 
@@ -22,9 +24,11 @@ const Homepage = () => {
 
   console.log("Token utilizzato:", token); // Log del token per debug
 
+  const { SERVERAPI } = useEnv(); // Assicurati di importare useEnv correttamente
+
   const loadDati = async () => {
     try {
-      const url = `https://apit.axonasrl.com/api/axo_sel/${token}/progettiserp/progettiserpsel/leggi`;
+      const url = `${SERVERAPI}/api/axo_sel/${token}/progettiserp/progettiserpsel/leggi`;
       console.log("Calling API:", url);
 
       const response = await fetch(url);
@@ -35,20 +39,39 @@ const Homepage = () => {
 
       // Log dettagliato per vedere la struttura completa dell'oggetto
       if (data?.Itemset?.v_progettiserp?.length > 0) {
-        console.log("Struttura primo progetto:", JSON.stringify(data.Itemset.v_progettiserp[0], null, 2));
+        console.log(
+          "Struttura primo progetto:",
+          JSON.stringify(data.Itemset.v_progettiserp[0], null, 2)
+        );
       } else {
         console.log("No projects found in response");
       }
 
       // Formatta i dati ricevuti aggiungendo o mappando i campi richiesti
-      const formattedData = (data?.Itemset?.v_progettiserp || []).map(item => ({
-        ...item,
-        ProgettiSerp_Nome: item.ProgettiSerp_Nome || item.nome || `Progetto ${item.IDOBJ || ''}`,
-        // Prioritize dataKeyword, then dataEstrazione, then ProgettiSerp_UltimoReport, then dataInserimento
-        ProgettiSerp_UltimoReport: item.dataKeyword || item.dataEstrazione || item.ProgettiSerp_UltimoReport || item.dataInserimento || new Date().toISOString(), 
-        domain: item.ProgettiSerp_DNS || item.domain || item.url || item.dominio || '',
-        keywords: item.totaleKeyword || item.keywords || item.parole_chiave || 0
-      }));
+      const formattedData = (data?.Itemset?.v_progettiserp || []).map(
+        (item) => ({
+          ...item,
+          ProgettiSerp_Nome:
+            item.ProgettiSerp_Nome ||
+            item.nome ||
+            `Progetto ${item.IDOBJ || ""}`,
+          // Prioritize dataKeyword, then dataEstrazione, then ProgettiSerp_UltimoReport, then dataInserimento
+          ProgettiSerp_UltimoReport:
+            item.dataKeyword ||
+            item.dataEstrazione ||
+            item.ProgettiSerp_UltimoReport ||
+            item.dataInserimento ||
+            new Date().toISOString(),
+          domain:
+            item.ProgettiSerp_DNS ||
+            item.domain ||
+            item.url ||
+            item.dominio ||
+            "",
+          keywords:
+            item.totaleKeyword || item.keywords || item.parole_chiave || 0,
+        })
+      );
 
       console.log("Formatted data:", formattedData);
       setDati(formattedData);
@@ -59,7 +82,7 @@ const Homepage = () => {
 
   const loadKeywords = async () => {
     try {
-      const url = `https://apit.axonasrl.com/api/axo_sel/${token}/keywordserp/keywordserpsel/leggi`;
+      const url = `${SERVERAPI}/api/axo_sel/${token}/keywordserp/keywordserpsel/leggi`;
       console.log("Calling keywords API:", url);
 
       const response = await fetch(url);
@@ -94,19 +117,27 @@ const Homepage = () => {
   };
 
   // Filtra i progetti in base al termine di ricerca
-  const filteredProjects = dati.filter(project =>
-    (project.ProgettiSerp_Nome || '').toLowerCase().includes(searchTerm) ||
-    (project.ProgettiSerp_DNS || '').toLowerCase().includes(searchTerm)
+  const filteredProjects = dati.filter(
+    (project) =>
+      (project.ProgettiSerp_Nome || "").toLowerCase().includes(searchTerm) ||
+      (project.ProgettiSerp_DNS || "").toLowerCase().includes(searchTerm)
   );
 
   if (loading) return null;
 
   return (
-    <Layout onProjectAdded={handleProjectAdded} showSearchBar={true} onSearch={handleSearch}>
+    <Layout
+      onProjectAdded={handleProjectAdded}
+      showSearchBar={true}
+      onSearch={handleSearch}
+    >
       <Box sx={{ pl: 2, pr: 3 }}>
-        <ProjectGrid projects={filteredProjects} onProjectUpdate={() => {
-          loadDati(); // Ricarica i dati dopo l'aggiornamento di un progetto
-        }} />
+        <ProjectGrid
+          projects={filteredProjects}
+          onProjectUpdate={() => {
+            loadDati(); // Ricarica i dati dopo l'aggiornamento di un progetto
+          }}
+        />
         <Typography sx={{ mt: 2 }} variant="body2">
           Keywords caricate: {keywords.length}
         </Typography>

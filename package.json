@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:test": "vite build --mode test",
-    "test": "npm run deploy -- --site=test --favicon=favicon --logo=logo",
+    "test": "npm run deploy -- --site=seot --favicon=favicon --logo=logo",
     "deploy": "node scripts/deploy.cjs",
     "lint": "eslint .",
     "preview": "vite preview",

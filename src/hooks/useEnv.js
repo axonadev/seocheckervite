@@ -13,19 +13,19 @@ const useEnv = () => {
 
   if (nameUrl.includes("localhost")) {
     return {
-      SERVERAPI: "https://apit.axonasrl.com", // O l'endpoint corretto per localhost se diverso
-      AZIENDA: "02546790185",
+      SERVERAPI: "http://localhost:44387", // O l'endpoint corretto per localhost se diverso//SERVERAPI: "https://apit.axonasrl.com", // O l'endpoint corretto per localhost se diverso
+      AZIENDA: "06087680960",
       SERVERWEB: "http://localhost:5173",
       SERVERPATH: "svil.axonasrl.com",
       MessaggioPromoApp,
       TokenGuest,
     };
-  } else if (nameUrl.includes("evet.")) {
+  } else if (nameUrl.includes("seot.")) {
     return {
       SERVERAPI: "https://apit.axonasrl.com",
-      AZIENDA: "02546790185",
-      SERVERWEB: "https://evet.axonasrl.com",
-      SERVERPATH: "evet.axonasrl.com",
+      AZIENDA: "06087680960",
+      SERVERWEB: "https://seot.axonasrl.com",
+      SERVERPATH: "seot.axonasrl.com",
       MessaggioPromoApp,
       TokenGuest,
     };
@@ -33,9 +33,9 @@ const useEnv = () => {
     // Assicurati che questo sia l'endpoint di produzione corretto
     return {
       SERVERAPI: "https://api.axonasrl.com",
-      AZIENDA: "02546790185",
-      SERVERWEB: "https://app.eventfy.it",
-      SERVERPATH: "app.eventfy.it",
+      AZIENDA: "06087680960",
+      SERVERWEB: "https://seo.axonasrl.com",
+      SERVERPATH: "seo.axonasrl.com",
       MessaggioPromoApp,
       TokenGuest,
     };
