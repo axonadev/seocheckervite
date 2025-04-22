@@ -44,6 +44,30 @@ const ProjectDetail = () => {
   const [exportDateAnchorEl, setExportDateAnchorEl] = useState(null);
   const [uniqueExtractionDates, setUniqueExtractionDates] = useState([]);
   const [exportPdfDateAnchorEl, setExportPdfDateAnchorEl] = useState(null);
+  const [logoImageDataUrl, setLogoImageDataUrl] = useState(null);
+  const [posizionamentoImageDataUrl, setPosizionamentoImageDataUrl] = useState(null);
+
+  useEffect(() => {
+    fetch('/logo.png')
+      .then(res => res.blob())
+      .then(blob => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setLogoImageDataUrl(reader.result);
+        };
+        reader.readAsDataURL(blob);
+      });
+
+    fetch('/posizionamento.png')
+      .then(res => res.blob())
+      .then(blob => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPosizionamentoImageDataUrl(reader.result);
+        };
+        reader.readAsDataURL(blob);
+      });
+  }, []);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -83,12 +107,8 @@ const ProjectDetail = () => {
           }));
           setKeywords(keywordsWithId);
 
-          // Log the raw v_keywords array before processing
-          console.log("Raw v_keywords data:", keywordsData?.Itemset?.v_keywords); // <-- Add this log
-
-          // Extract and sort unique extraction dates from keywords data
           const dates = keywordsData?.Itemset?.v_keywords 
-            ?.map(item => item.dataestrazione) // <-- Use lowercase field name
+            ?.map(item => item.dataestrazione)
             .filter((date, index, self) => date && self.indexOf(date) === index)
             .sort((a, b) => new Date(b) - new Date(a));
           setUniqueExtractionDates(dates || []);
@@ -132,13 +152,11 @@ const ProjectDetail = () => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       
-      // Check file type
       if (!file.type.match('image.*')) {
         alert('Per favore seleziona un\'immagine');
         return;
       }
       
-      // Check file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
         alert('L\'immagine non può superare i 2MB');
         return;
@@ -237,7 +255,6 @@ const ProjectDetail = () => {
       return;
     }
 
-    // Filter keywords for positions 1-10
     const filteredKeywords = keywords.filter(kw => {
       const position = kw.KeywordSerp_Posizione;
       return typeof position === 'number' && position >= 1 && position <= 10; 
@@ -250,7 +267,6 @@ const ProjectDetail = () => {
       return;
     }
 
-    // Change orientation back to 'landscape'
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' }); 
     const selectedDate = dateString ? FormatDate(new Date(dateString), 'dd-MM-yyyy') : FormatDate(new Date(), 'dd-MM-yyyy');
     const filenameBase = `keywords_${project?.ProgettiSerp_Nome || 'export'}_${selectedDate}_pos1-10`;
@@ -259,119 +275,191 @@ const ProjectDetail = () => {
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
 
-    // --- !! IMPORTANT !! ---
-    // Replace this placeholder with the actual base64 data URL of your logo image
-    const logoImageDataUrl = projectLogo || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...'; // Placeholder for logo image
-    // --- Header Function ---
     const drawHeader = (data) => {
-      const logoWidth = 50; // Adjust width as needed (in mm)
-      const logoHeight = 15; // Adjust height as needed (in mm)
-      const logoX = margin;
-      const logoY = margin - 5; // Adjust Y position if needed
-
       try {
-        // Add the image using the data URL
-        doc.addImage(logoImageDataUrl, 'PNG', logoX, logoY, logoWidth, logoHeight);
+        const logoHeight = 15;
+        const logoWidth = 50;
+        const logoX = (pageWidth / 2) - (logoWidth / 2);
+        const logoY = margin - 5;
+        
+        if (logoImageDataUrl) {
+          doc.addImage(logoImageDataUrl, 'PNG', logoX, logoY, logoWidth, logoHeight);
+        } else {
+          doc.setFontSize(12);
+          doc.setTextColor(100, 100, 100);
+          doc.text("AM Partners", pageWidth / 2, logoY + 7, { align: 'center' });
+        }
       } catch (error) {
-        console.error("Error adding image to PDF:", error);
-        // Fallback or alternative text if image fails
-        doc.setFontSize(10);
-        doc.setTextColor(255, 0, 0); // Red color for error indication
-        doc.text("Error loading logo", logoX, logoY + logoHeight / 2);
+        console.error("Error creating PDF header:", error);
       }
     };
 
-    // --- Footer Function ---
     const drawFooter = (data) => {
-      const footerY = pageHeight - margin - 5; // Position higher
-      const colWidth = (pageWidth - 2 * margin) / 4; // Adjust width based on margins
-      doc.setFontSize(7); // Smaller font size
+      const footerY = pageHeight - margin - 5;
+      const colWidth = (pageWidth - 2 * margin) / 4;
+      doc.setFontSize(7);
       doc.setTextColor(80, 80, 80);
       doc.setLineWidth(0.2);
-      doc.setDrawColor(120, 180, 70); // Line color
-      doc.line(margin, footerY - 2, pageWidth - margin, footerY - 2); // Line above footer
+      doc.setDrawColor(120, 180, 70);
+      doc.line(margin, footerY - 2, pageWidth - margin, footerY - 2);
 
-      // Colonna 1: HUB
       doc.setFont(undefined, 'bold');
-      doc.text("HUB", margin, footerY + 2); // Adjusted Y
+      doc.text("HUB", margin, footerY + 2);
       doc.setFont(undefined, 'normal');
-      doc.text("VIA COSIMO DEL FRATE, 16", margin, footerY + 5); // Adjusted Y
-      doc.text("LEGNANO (MI)", margin, footerY + 8); // Adjusted Y
+      doc.text("VIA COSIMO DEL FRATE, 16", margin, footerY + 5);
+      doc.text("LEGNANO (MI)", margin, footerY + 8);
 
-      // Colonna 2: CUBE
       const col2X = margin + colWidth;
       doc.setFont(undefined, 'bold');
-      doc.text("CUBE [CORE] ROOM", col2X, footerY + 2); // Adjusted Y
+      doc.text("CUBE [CORE] ROOM", col2X, footerY + 2);
       doc.setFont(undefined, 'normal');
-      doc.text("VIA MONTE NAPOLEONE, 22", col2X, footerY + 5); // Adjusted Y
-      doc.text("MILANO", col2X, footerY + 8); // Adjusted Y
+      doc.text("VIA MONTE NAPOLEONE, 22", col2X, footerY + 5);
+      doc.text("MILANO", col2X, footerY + 8);
 
-      // Colonna 3: SEDE LEGALE
       const col3X = margin + colWidth * 2;
       doc.setFont(undefined, 'bold');
-      doc.text("SEDE LEGALE", col3X, footerY + 2); // Adjusted Y
+      doc.text("SEDE LEGALE", col3X, footerY + 2);
       doc.setFont(undefined, 'normal');
-      doc.text("VIA I BOSSI, 46", col3X, footerY + 5); // Adjusted Y
-      doc.text("RESCALDINA (MI)", col3X, footerY + 8); // Adjusted Y
+      doc.text("VIA I BOSSI, 46", col3X, footerY + 5);
+      doc.text("RESCALDINA (MI)", col3X, footerY + 8);
 
-      // Colonna 4: Contatti
       const col4X = margin + colWidth * 3;
       doc.setFont(undefined, 'bold');
-      doc.text("www.ampartners.info", col4X, footerY + 2); // Adjusted Y
+      doc.text("www.ampartners.info", col4X, footerY + 2);
       doc.setFont(undefined, 'normal');
-      doc.text("info@ampartners.info", col4X, footerY + 5); // Adjusted Y
-
-      // Page number (optional)
-      // doc.setFontSize(8);
-      // doc.text(`Pagina ${data.pageNumber}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+      doc.text("info@ampartners.info", col4X, footerY + 5);
     };
 
+    drawHeader();
+    doc.setFontSize(22);
+    doc.setFont(undefined, 'bold');
+    doc.text("REPORT", pageWidth / 2, margin + 25, { align: 'center' });
+    doc.setFontSize(26);
+    doc.text("POSIZIONAMENTO KEYWORD", pageWidth / 2, margin + 38, { align: 'center' });
 
-    // --- Define Table Columns and Rows ---
-    const tableColumn = ["PAROLA CHIAVE", "POSIZIONE SU GOOGLE", "PAGINA SITO POSIZIONATA"]; // Updated columns
+    if (posizionamentoImageDataUrl) {
+      const imgWidth = 140;
+      const imgHeight = 70;
+      const imgX = (pageWidth / 2) - (imgWidth / 2);
+      const imgY = margin + 50;
+      doc.addImage(posizionamentoImageDataUrl, 'PNG', imgX, imgY, imgWidth, imgHeight);
+    }
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    const reportText = `REPORT PAROLE CHIAVE ${selectedDate}`;
+    const reportTextWidth = doc.getTextWidth(reportText);
+    doc.text(reportText, pageWidth - margin - reportTextWidth, pageHeight - margin - 20);
+
+    drawFooter();
+
+    doc.addPage();
+
+    const tableColumn = ["PAROLA CHIAVE", "POSIZIONE SU GOOGLE", "PAGINA SITO POSIZIONATA"];
     const tableRows = [];
-
     filteredKeywords.forEach(kw => {
       const keywordData = [
         kw.KeywordSerp_Keyword || '',
-        kw.KeywordSerp_Posizione ?? '', // Position will always be 1-10 here
-        // Removed Variazione
+        kw.KeywordSerp_Posizione ?? '',
         kw.KeywordSerp_URL || ''
       ];
       tableRows.push(keywordData);
     });
 
-    // --- Generate Table with Header/Footer on each page ---
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
-      startY: margin + 15, // Start table below header space
-      theme: 'grid', // Change theme back to 'grid'
+      startY: margin + 20,
+      theme: 'grid',
       styles: {
         fontSize: 8,
-        cellPadding: 1.5, // Keep padding or adjust as needed
+        cellPadding: 1.5,
         valign: 'middle',
       },
       headStyles: {
-        fillColor: [22, 160, 133], // Apply green background color
-        textColor: [255, 255, 255], // White text color
+        fillColor: [22, 160, 133],
+        textColor: [255, 255, 255],
         fontStyle: 'bold',
         fontSize: 9,
-        halign: 'center', // Center align header text like the image
+        halign: 'center',
       },
       columnStyles: {
-        0: { cellWidth: 'auto', halign: 'left' }, // Keyword - Left aligned
-        1: { cellWidth: 30, halign: 'center' }, // Position - Center aligned
-        2: { cellWidth: 'auto', halign: 'left' } // URL - Left aligned
+        0: { cellWidth: 'auto', halign: 'left' },
+        1: { cellWidth: 30, halign: 'center' },
+        2: { cellWidth: 'auto', halign: 'left' }
       },
       didDrawPage: (data) => {
-        // Draw header and footer on every page the table spans
         drawHeader(data);
         drawFooter(data);
       },
       margin: { top: margin + 10, bottom: margin + 15, left: margin, right: margin } 
     });
-
+    
+    doc.addPage();
+    
+    drawHeader();
+    drawFooter();
+    
+    let yPosition = margin + 25;
+    const leftMargin = margin + 5;
+    const lineHeight = 6;
+    
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.text("Breve legenda delle voci del report:", leftMargin, yPosition);
+    
+    yPosition += lineHeight;
+    doc.setFont(undefined, 'bold');
+    doc.text("PAROLA CHIAVE:", leftMargin, yPosition);
+    doc.setFont(undefined, 'normal');
+    doc.text("con il termine \"parole chiave\" (keywords), si identificano le ricerche che gli utenti effettuano sui motori di ricerca per trovare una risposta a un", leftMargin + 35, yPosition);
+    yPosition += lineHeight - 1;
+    doc.text("bisogno specifico. ... Le query sono un insieme di parole, domande o frasi, digitate nel motore di ricerca, che racchiudono un'intenzione di ricerca.", leftMargin, yPosition);
+    
+    yPosition += lineHeight * 2;
+    doc.setFont(undefined, 'bold');
+    doc.text("POSIZIONE SU GOOGLE.IT:", leftMargin, yPosition);
+    doc.setFont(undefined, 'normal');
+    doc.text("nel report vengono proposte le parole chiave che hanno raggiunto le prime 10 posizioni nelle pagine del motore di ricerca", leftMargin + 45, yPosition);
+    yPosition += lineHeight - 1;
+    doc.text("(Google.it), ovvero che occupano la Prima Pagina di Google.", leftMargin, yPosition);
+    
+    yPosition += lineHeight * 2;
+    doc.setFont(undefined, 'bold');
+    doc.text("PAGINA SITO POSIZIONATA:", leftMargin, yPosition);
+    doc.setFont(undefined, 'normal');
+    doc.text("è la pagina del sito che Google ha intercettato e \"premiato\". Diverse pagine posizionate indicano che il motore di ricerca ha", leftMargin + 52, yPosition);
+    yPosition += lineHeight - 1;
+    doc.text('"recepito" correttamente i vari contenuti del sito.', leftMargin, yPosition);
+    
+    yPosition += lineHeight * 3;
+    doc.setFont(undefined, 'bold');
+    doc.text("IL VOSTRO TEAM DEL PROGETTO", leftMargin, yPosition);
+    
+    yPosition += lineHeight * 1.5;
+    const teamData = [
+      ["Chiara: SEO E CONTENT", "chiara@ampartners.info"],
+      ["Camilla: GRAFICA E WEBDESIGN", "camilla@ampartners.info"],
+      ["Marco: PROJECT MANAGER", "marco@ampartners.info"],
+      ["Antonio: DIREZIONE", "antonio@ampartners.info"]
+    ];
+    
+    const emailColumnX = leftMargin + 80;
+    teamData.forEach((member, index) => {
+      const currentY = yPosition + (index * lineHeight * 1.2);
+      doc.setFont(undefined, 'bold');
+      doc.text(member[0], leftMargin, currentY);
+      doc.setFont(undefined, 'normal');
+      doc.text(member[1], emailColumnX, currentY);
+    });
+    
+    yPosition += lineHeight * 7;
+    doc.setFont(undefined, 'bold');
+    doc.text("PROMEMORIA", leftMargin, yPosition);
+    yPosition += lineHeight * 1.2;
+    doc.setFont(undefined, 'normal');
+    doc.text("Vi ricordiamo di segnalarci eventuali prodotti/servizi/ o parole chiave importanti da inserire all'interno del piano editoriale di content marketing.", leftMargin, yPosition);
+    
     doc.save(`${filenameBase}.pdf`);
     handleCloseExportPdfDate();
   };
@@ -510,17 +598,15 @@ const ProjectDetail = () => {
     cutout: '60%',
   };
 
+ 
   return (
     <Layout showSearchBar={false}>
       <Box sx={{ p: 3 }}>
-        {/* Top Section */}
         <Grid container spacing={2} sx={{ mb: 3, alignItems: 'flex-start' }}>
-          {/* Left: Project Name */}
           <Grid item xs={12} md={4}>
             <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {project.ProgettiSerp_Nome || "Unnamed Project"}
             </Typography>
-            {/* PDF Export Date Popover */}
             <Popover
               id={exportPdfDatePopoverId}
               open={openExportPdfDate}
@@ -560,12 +646,9 @@ const ProjectDetail = () => {
                 )}
               </Box>
             </Popover>
-            {/* End PDF Export Date Popover */}
           </Grid>
 
-          {/* Center: Logo and Team */}
           <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {/* Hidden file input */}
             <input
               ref={fileInputRef}
               type="file"
@@ -596,10 +679,7 @@ const ProjectDetail = () => {
                 Insert logo
               </Button>
             )}
-            {/* Placeholder for Team Icon */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
-              
-              
             </Box>
           </Grid>
 
@@ -618,9 +698,7 @@ const ProjectDetail = () => {
                 </Grid>
               </Grid>
 
-              {/* Main Content Grid */}
         <Grid container spacing={3}>
-          {/* Left Column: Keywords Table */}
           <Grid item xs={12} md={8}>
             <Paper sx={{ p: 2, height: '100%' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -656,7 +734,6 @@ const ProjectDetail = () => {
                 </Box>
               </Box>
               
-              {/* Export Date Popover */}
               <Popover
                 id={exportDatePopoverId}
                 open={openExportDate}
@@ -697,7 +774,6 @@ const ProjectDetail = () => {
                 </Box>
               </Popover>
               
-              {/* Popover for adding keywords */}
               <Popover
                 id={addKeywordPopoverId}
                 open={openAddKeyword}
@@ -781,7 +857,6 @@ const ProjectDetail = () => {
                   </Box>
                 </Box>
               </Popover>
-              {/* End Popover */}
               <Box sx={{ height: 600, width: '100%' }}>
                 <DataGrid
                   rows={keywords}
@@ -796,10 +871,9 @@ const ProjectDetail = () => {
                 />
               </Box>
             </Paper>
-          </Grid> {/* Closing tag for Left Column Grid item */}
+          </Grid>
 
-          {/* Right Column: Pie Chart */}
-          <Grid item xs={12} md={4}> {/* Opening tag */}
+          <Grid item xs={12} md={4}>
             <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>% Presenza url in pagina</Typography>
               <Box sx={{ position: 'relative', height: '450px', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -819,8 +893,8 @@ const ProjectDetail = () => {
                 </Typography>
               </Box>
             </Paper>
-          </Grid> {/* Ensure this closing tag exists and corresponds to the <Grid item xs={12} md={4}> */}
-        </Grid> {/* Closing tag for Main Content Grid container */}
+          </Grid>
+        </Grid>
       </Box>
     </Layout>
   );
