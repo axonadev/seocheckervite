@@ -259,25 +259,26 @@ const ProjectDetail = () => {
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
 
+    // --- !! IMPORTANT !! ---
+    // Replace this placeholder with the actual base64 data URL of your logo image
+    const logoImageDataUrl = projectLogo || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...'; // Placeholder for logo image
     // --- Header Function ---
     const drawHeader = (data) => {
-      doc.setFontSize(18);
-      doc.setTextColor(120, 180, 70); // Verde AM Partners
-      doc.setFont(undefined, 'bold');
-      doc.text("AM", margin, margin + 5);
-      doc.setFontSize(6);
-      doc.setTextColor(100, 100, 100); // Grigio per slogan
-      doc.setFont(undefined, 'normal');
-      // Simple box around AM
-      doc.setDrawColor(120, 180, 70);
-      doc.setLineWidth(0.5);
-      doc.rect(margin - 1, margin -1 , 8, 8); // Adjust size/position as needed
+      const logoWidth = 50; // Adjust width as needed (in mm)
+      const logoHeight = 15; // Adjust height as needed (in mm)
+      const logoX = margin;
+      const logoY = margin - 5; // Adjust Y position if needed
 
-      doc.setFontSize(8);
-      doc.setTextColor(100, 100, 100); // Grigio per slogan
-      doc.text("PARTNERS", margin + 8, margin + 5); // Position next to AM
-      doc.setFontSize(6);
-      doc.text("DIGITAL | CREATIVE | AGENCY", margin + 8, margin + 8); // Position below PARTNERS
+      try {
+        // Add the image using the data URL
+        doc.addImage(logoImageDataUrl, 'PNG', logoX, logoY, logoWidth, logoHeight);
+      } catch (error) {
+        console.error("Error adding image to PDF:", error);
+        // Fallback or alternative text if image fails
+        doc.setFontSize(10);
+        doc.setTextColor(255, 0, 0); // Red color for error indication
+        doc.text("Error loading logo", logoX, logoY + logoHeight / 2);
+      }
     };
 
     // --- Footer Function ---
@@ -345,30 +346,29 @@ const ProjectDetail = () => {
       head: [tableColumn],
       body: tableRows,
       startY: margin + 15, // Start table below header space
-      theme: 'plain', // Match image style (no grid lines)
+      theme: 'grid', // Change theme back to 'grid'
       styles: {
         fontSize: 8,
-        cellPadding: 1.5,
+        cellPadding: 1.5, // Keep padding or adjust as needed
         valign: 'middle',
       },
       headStyles: {
-        fillColor: false, // No background color for header
-        textColor: [0, 0, 0], // Black text
+        fillColor: [22, 160, 133], // Apply green background color
+        textColor: [255, 255, 255], // White text color
         fontStyle: 'bold',
         fontSize: 9,
-        halign: 'left',
+        halign: 'center', // Center align header text like the image
       },
       columnStyles: {
-        0: { cellWidth: 'auto', halign: 'left' }, // Keyword
-        1: { cellWidth: 30, halign: 'center' }, // Position (Centered)
-        2: { cellWidth: 'auto', halign: 'left' } // URL
+        0: { cellWidth: 'auto', halign: 'left' }, // Keyword - Left aligned
+        1: { cellWidth: 30, halign: 'center' }, // Position - Center aligned
+        2: { cellWidth: 'auto', halign: 'left' } // URL - Left aligned
       },
       didDrawPage: (data) => {
         // Draw header and footer on every page the table spans
         drawHeader(data);
         drawFooter(data);
       },
-      // Margins might need adjustment for landscape, but these relative values should work
       margin: { top: margin + 10, bottom: margin + 15, left: margin, right: margin } 
     });
 
