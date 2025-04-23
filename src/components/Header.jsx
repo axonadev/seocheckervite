@@ -2,7 +2,7 @@ import React from 'react';
 import { AppBar, Toolbar, Typography, Box } from '@mui/material';
 import LanguageIcon from '@mui/icons-material/Language';
 
-const Header = () => {
+const Header = ({label="home"}) => {
   return (
     <>
       <AppBar
@@ -37,6 +37,20 @@ const Header = () => {
           >
             NKW: 20693 / 60000
           </Typography>
+
+          <Typography 
+            
+              variant="body2"
+              sx={{
+                ml: 2,
+                opacity: 0.8,
+                flexGrow: 1,
+                textAlign: 'right'
+              }}
+          >
+            {label}
+          </Typography>
+
         </Toolbar>
       </AppBar>
     </>

@@ -20,10 +20,12 @@ const SideMenu = ({ onProjectAdded }) => {
   };
 
   const handleHomeClick = () => {
+
     navigate('/');
   };
 
   const handleArchiveClick = () => {
+
     navigate('/archive');
   };
 
