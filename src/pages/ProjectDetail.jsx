@@ -235,23 +235,22 @@ const ProjectDetail = () => {
 
     const confirmation = window.confirm("Sei sicuro di voler eliminare questa keyword?");
     if (!confirmation) {
-      return; // Stop if the user cancels
+      return;
     }
 
     const url = `${SERVERAPI}/api/axo_sel`;
     const requestBody = {
       Token: token,
-      IDOBJ: actualId, // Use the identified ID
-      idobj: actualId, // Also include lowercase version to be safe
+      IDOBJ: actualId * -1,
       DB: "progettiserpkeywords",
-      Modulo: "progettiserpkeywords",
+      Modulo: "Elimina Key",
       Classe: "progettiserpkeywordssel",
-      Operazione: "DELETE" // Explicitly state the operation
+      Item: `[{progettiserpkeywords:[{"PIDOBJ":${project.IDOBJ},"IDOBJ":${actualId * -1}}]}]`
     };
 
     try {
       const response = await fetch(url, {
-        method: "POST", // Still using POST as the endpoint seems generic
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
