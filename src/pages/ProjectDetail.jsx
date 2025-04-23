@@ -962,6 +962,7 @@ const ProjectDetail = () => {
             {projectLogo ? (
               <Box
                 sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+                onClick={handleLogoClick}
               >
                 <img src={projectLogo}></img>
                 <Typography variant="caption" color="text.secondary">
