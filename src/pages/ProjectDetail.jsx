@@ -62,6 +62,7 @@ const ProjectDetail = () => {
   const [posizionamentoImageDataUrl, setPosizionamentoImageDataUrl] =
     useState(null);
   const [editProjectAnchorEl, setEditProjectAnchorEl] = useState(null);
+  const [progImg, setProgImg] = useState(0);
 
   useEffect(() => {
     fetch("/icon/logo.png")
@@ -83,8 +84,17 @@ const ProjectDetail = () => {
         };
         reader.readAsDataURL(blob);
       });
+  }, []);
 
-    fetch("/personal/" + AZIENDA + "/doc/logo/logo_" + id + ".png")
+  useEffect(() => {
+    fetch(
+      "/personal/" +
+        AZIENDA +
+        "/doc/logo/logo_" +
+        id +
+        ".png?v=" +
+        Math.random()
+    )
       .then((res) => res.blob())
       .then((blob) => {
         const reader = new FileReader();
@@ -93,7 +103,7 @@ const ProjectDetail = () => {
         };
         reader.readAsDataURL(blob);
       });
-  }, []);
+  }, [progImg]);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -269,18 +279,8 @@ const ProjectDetail = () => {
 
       if (response.ok) {
         //const data = await response.json();
-        setProg((pp) => {
-          return pp + 1;
-        });
-        setLogo(
-          SERVERWEB +
-            "/personal/" +
-            REACT_AZIENDA +
-            "/doc/logo/logo_" +
-            id +
-            ".png?v=" +
-            Math.random()
-        );
+
+        setProgImg((prev) => prev + 1);
       } else {
         const errorData = await response.json();
         console.error(errorData.message);
