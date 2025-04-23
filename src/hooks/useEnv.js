@@ -13,7 +13,8 @@ const useEnv = () => {
 
   if (nameUrl.includes("localhost")) {
     return {
-      SERVERAPI: "http://localhost:44387", // O l'endpoint corretto per localhost se diverso//SERVERAPI: "https://apit.axonasrl.com", // O l'endpoint corretto per localhost se diverso
+      //SERVERAPI: "http://localhost:44387", // O l'endpoint corretto per localhost se diverso
+      SERVERAPI: "https://apit.axonasrl.com", // O l'endpoint corretto per localhost se diverso
       AZIENDA: "06087680960",
       SERVERWEB: "http://localhost:5173",
       SERVERPATH: "svil.axonasrl.com",
