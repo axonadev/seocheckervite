@@ -146,18 +146,19 @@ const ProjectDetail = () => {
       const url = `${SERVERAPI}/api/axo_sel`;
 
       const keywordData = {
-        KeywordSerp_Keyword: keywordToAdd,
+        progettiserpkeywords_parole: keywordToAdd, // Renamed from KeywordSerp_Keyword
         KeywordSerp_ProgettiSerp_id: project.IDOBJ,
         KeywordSerp_Azienda_id: AZIENDA,
+        pidobj: project.IDOBJ,
       };
 
       const requestBody = {
         Token: token,
         IDOBJ: 0,
-        DB: "keywordserp",
-        Modulo: "keywordserp",
-        Classe: "keywordserpsel",
-        Item: ` {keywordserp:[${JSON.stringify(keywordData)}]} `
+        DB: "progettiserpkeywords",
+        Modulo: "progettiserpkeywords",
+        Classe: "progettiserpkeywordssel",
+        Item: ` {progettiserpkeywords:[${JSON.stringify(keywordData)}]} `
       };
 
       try {
