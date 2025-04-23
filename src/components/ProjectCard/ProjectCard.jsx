@@ -24,6 +24,7 @@ const ProjectCard = ({ project, onProjectUpdate=()=>{} }) => {
 
   const domainToDisplay = project.ProgettiSerp_DNS || project.domain || "No domain";
   const keywordCount = project.totaleKeyword || project.keywords || 0;
+  const lastReportDate = project.dataEstrazione || project.ProgettiSerp_UltimoReport || project.dataKeyword || project.dataInserimento;
 
   const handleArchiveProject = async (event) => {
     event.stopPropagation();
@@ -109,7 +110,7 @@ const ProjectCard = ({ project, onProjectUpdate=()=>{} }) => {
             <Box display="flex" alignItems="center">
               <AccessTimeIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />
               <Typography variant="body2">
-                Ultimo Report: {FormatDate(project.ProgettiSerp_UltimoReport || project.dataKeyword || new Date(), 'dd/MM/yyyy')}
+                Ultimo Report: {lastReportDate ? FormatDate(lastReportDate, 'dd/MM/yyyy') : 'N/A'}
               </Typography>
             </Box>
             <Box display="flex" alignItems="center">
