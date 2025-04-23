@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  Paper, 
-  Box, 
-  Typography, 
-  TextField, 
+import {
+  Paper,
+  Box,
+  Typography,
+  TextField,
   Button,
   Popover,
   Snackbar,
@@ -23,147 +23,125 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
     message: '',
     severity: 'success'
   });
-  
+
   const navigate = useNavigate();
   const { SERVERAPI } = useEnv();
   const token = localStorage.getItem("axo_token");
   const open = Boolean(anchorEl);
 
-  const handleSubmit = async () => {
-    // Validation
-    if (!projectName.trim()) {
-      setSnackbar({
-        open: true,
-        message: 'Inserisci il nome del progetto',
-        severity: 'error'
+  // Fallback function to get the last created project
+  const fallbackGetLastProjectId = async () => {
+    const getUrl = `${SERVERAPI}/api/axo_sel/${token}/progettiserp/progettiserpsel/leggi`;
+
+    try {
+      const res = await fetch(getUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
       });
+
+      const getData = await res.json();
+      if (getData?.Itemset?.v_progettiserp?.length > 0) {
+        const sorted = getData.Itemset.v_progettiserp.sort((a, b) => {
+          return new Date(b.dataInserimento) - new Date(a.dataInserimento);
+        });
+
+        return sorted[0]?.IDOBJ || null;
+      }
+    } catch (err) {
+      console.error("Errore nella fallback GET:", err);
+    }
+
+    return null;
+  };
+
+  const handleSubmit = async () => {
+    if (!projectName.trim()) {
+      setSnackbar({ open: true, message: 'Inserisci il nome del progetto', severity: 'error' });
       return;
     }
 
     if (!projectUrl.trim() || projectUrl === 'https://') {
-      setSnackbar({
-        open: true,
-        message: 'Inserisci un URL valido',
-        severity: 'error'
-      });
+      setSnackbar({ open: true, message: 'Inserisci un URL valido', severity: 'error' });
       return;
     }
 
+    setLoading(true);
+
+    const newProject = {
+      ProgettiSerp_Nome: projectName,
+      ProgettiSerp_DNS: projectUrl,
+      ProgettiSerp_Stato: 1,
+      dataInserimento: new Date().toISOString()
+    };
+
+    const apiUrl = `${SERVERAPI}/api/axo_sel`;
+
+    const requestBody = {
+      Token: token,
+      IDOBJ: 0,
+      DB: "progettiserp",
+      Modulo: "progettiserp",
+      Classe: "progettiserpsel",
+      Item: JSON.stringify({ progettiserp: [newProject] })
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    let projectId = null;
+
     try {
-      setLoading(true);
-      
-      // Prepare project data - Make sure structure matches API expectations
-      const newProject = {
-        ProgettiSerp_Nome: projectName,
-        ProgettiSerp_DNS: projectUrl,
-        ProgettiSerp_Stato: 1, // Active status
-        dataInserimento: new Date().toISOString()
-      };
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
+      });
 
-      console.log("Creating project with data:", newProject);
-      
-      // Try direct fetch instead of using the Scrivi function
-      const apiUrl = `${SERVERAPI}/api/axo_sel`;
-      console.log("Using API URL:", apiUrl);
-      console.log("Using token:", token ? "Token exists" : "No token");
-      
-      // Prepare request body based on the Scrivi function parameters
-      const requestBody = {
-        Token: token,
-        IDOBJ: 0, // IDOBJ 0 for new records
-        DB: "progettiserp",
-        Modulo: "progettiserp",
-        Classe: "progettiserpsel",
-        Item: ` {progettiserp:[${JSON.stringify(newProject)}]} ` // Format matches the Scrivi function
-      };
+      clearTimeout(timeoutId);
 
-      // Set up a controller for request timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second timeout
-      
-      try {
-        const response = await fetch(apiUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(requestBody),
-          signal: controller.signal
-        });
-        
-        // Clear the timeout
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          throw new Error(`Server responded with status: ${response.status}`);
-        }
+      const data = await response.json();
+      console.log("POST response:", data);
 
-        const data = await response.json();
-        console.log("Project creation direct response:", data);
-        console.log("Full response structure:", JSON.stringify(data, null, 2));
-        
-        if (data && data.Errore) {
-          throw new Error(data.Errore);
-        }
-        
-        setSnackbar({
-          open: true,
-          message: 'Progetto creato con successo!',
-          severity: 'success'
-        });
-        
-        // Reset form fields
-        setProjectName('');
-        setProjectUrl('https://');
-        
-        // Notify parent component that a project was added
-        if (onProjectAdded) {
-          onProjectAdded();
-        }
-        
-        // Get the new project ID
-        let projectId = null;
-        
-        if (data && typeof data.IDOBJ !== 'undefined') {
-          projectId = data.IDOBJ;
-          console.log("Found project ID in data.IDOBJ:", projectId);
-        } else if (data && data.Item && data.Item[0] && typeof data.Item[0].IDOBJ !== 'undefined') {
-          projectId = data.Item[0].IDOBJ;
-          console.log("Found project ID in data.Item[0].IDOBJ:", projectId);
-        } else if (data && data.Itemset && data.Itemset.v_progettiserp && data.Itemset.v_progettiserp[0] && typeof data.Itemset.v_progettiserp[0].IDOBJ !== 'undefined') {
-          projectId = data.Itemset.v_progettiserp[0].IDOBJ;
-          console.log("Found project ID in data.Itemset.v_progettiserp[0].IDOBJ:", projectId);
-        }
-        
-        // Close the popup
-        onClose();
-        
-        // Navigate to the newly created project detail page after a small delay to allow UI updates to complete
-        if (projectId) {
-          // Wait a moment to ensure all state updates are applied before navigation
-          window.setTimeout(() => {
-            console.log(`Navigating to /projects/${projectId}`);
-            navigate(`/projects/${projectId}`, { replace: true });
-          }, 300);
-        } else {
-          console.error("Could not find project ID in response");
-          // Fallback: just go to the projects list
-          window.setTimeout(() => {
-            navigate('/');
-          }, 300);
-        }
-      } catch (fetchError) {
-        if (fetchError.name === 'AbortError') {
-          throw new Error('La richiesta è scaduta. Il server non ha risposto in tempo.');
-        } else {
-          throw fetchError;
-        }
+      if (data?.IDOBJ) {
+        projectId = parseInt(data.IDOBJ, 10);
+      } else if (Array.isArray(data?.Item) && data.Item[0]?.IDOBJ) {
+        projectId = parseInt(data.Item[0].IDOBJ, 10);
       }
-    } catch (error) {
-      console.error('Error creating project:', error);
+
+      // Fallback se l'ID non è arrivato dalla POST
+      if (!projectId) {
+        console.warn("ID non presente nella risposta POST, uso fallback GET...");
+        projectId = await fallbackGetLastProjectId();
+      }
+
       setSnackbar({
         open: true,
-        message: `Errore: ${error.message || 'Si è verificato un problema durante la creazione del progetto'}`,
+        message: 'Progetto creato con successo!',
+        severity: 'success'
+      });
+
+      setProjectName('');
+      setProjectUrl('https://');
+      onClose();
+      if (onProjectAdded) onProjectAdded();
+
+      if (projectId) {
+        console.log(`Navigating to project ID: ${projectId}`);
+        setTimeout(() => navigate(`/projects/${projectId}`), 300);
+      } else {
+        console.error("Nessun ID progetto trovato, reindirizzo alla home");
+        navigate('/');
+      }
+
+    } catch (error) {
+      console.error('Errore creazione progetto:', error);
+      setSnackbar({
+        open: true,
+        message: `Errore: ${error.message || 'Errore durante la creazione del progetto'}`,
         severity: 'error'
       });
     } finally {
@@ -181,21 +159,15 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
         open={open}
         anchorEl={anchorEl}
         onClose={onClose}
-        anchorOrigin={{
-          vertical: 'center',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'center',
-          horizontal: 'left',
-        }}
+        anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'center', horizontal: 'left' }}
       >
         <Paper sx={{ p: 2, width: '300px', bgcolor: '#f5f5f5' }}>
           <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
             <AddIcon sx={{ color: '#673ab7' }} />
             <Typography variant="h6">Nuovo Progetto</Typography>
           </Box>
-          
+
           <TextField
             fullWidth
             label="Nome Progetto"
@@ -205,7 +177,7 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
             disabled={loading}
             sx={{ mb: 2, bgcolor: '#fff' }}
           />
-          
+
           <TextField
             fullWidth
             label="URL del Progetto"
@@ -216,9 +188,9 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
             sx={{ mb: 2, bgcolor: '#fff' }}
           />
 
-          <Button 
-            fullWidth 
-            variant="contained" 
+          <Button
+            fullWidth
+            variant="contained"
             onClick={handleSubmit}
             disabled={loading}
             startIcon={loading && <CircularProgress size={20} color="inherit" />}
@@ -228,18 +200,14 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
           </Button>
         </Paper>
       </Popover>
-      
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert 
-          onClose={handleCloseSnackbar} 
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
           {snackbar.message}
         </Alert>
       </Snackbar>
