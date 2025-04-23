@@ -45,12 +45,16 @@ const useProjectData = (projectId, token, SERVERAPI, AZIENDA) => {
         // Don't throw error here, project might exist without keywords yet
       } else {
         const keywordsData = await keywordsResponse.json();
+        console.log("Raw keywords response:", keywordsData);
+        
         const keywordsWithId = (keywordsData?.Itemset?.v_keywords || []).map(
           (kw, index) => ({
-            id: kw.IDOBJ || `temp-${index}-${Date.now()}`,
-            KeywordSerp_Keyword: kw.KeywordSerp_Keyword || kw.keyword || kw.Keyword || "",
-            KeywordSerp_Posizione: kw.KeywordSerp_Posizione || kw.posizione || kw.Posizione || null,
-            KeywordSerp_Variazione: kw.KeywordSerp_Variazione || kw.variazione || kw.Variazione || null,
+            id: kw.idobj || kw.IDOBJ || `temp-${index}-${Date.now()}`, // prioritize lowercase idobj
+            idobj: kw.idobj, // store original lowercase idobj
+            IDOBJ: kw.IDOBJ, // store original uppercase IDOBJ if available
+            KeywordSerp_Keyword: kw.keyword || kw.KeywordSerp_Keyword || kw.Keyword || "",
+            KeywordSerp_Posizione: kw.posizione || kw.KeywordSerp_Posizione || kw.Posizione || null,
+            KeywordSerp_Variazione: kw.variazione || kw.KeywordSerp_Variazione || kw.Variazione || null,
             KeywordSerp_URL: kw.urlkey || kw.KeywordSerp_URL || kw.url || kw.URL || "",
           })
         );

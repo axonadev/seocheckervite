@@ -207,8 +207,93 @@ const ProjectDetail = () => {
     }
   };
 
-  const handleDeleteKeyword = (keywordId) => {
-    console.warn("handleDeleteKeyword only updates local state currently.");
+  const handleDeleteKeyword = async (keywordId) => {
+    if (!keywordId) {
+      alert("ID Keyword non valido per l'eliminazione.");
+      return;
+    }
+    console.log(`Attempting to delete keyword with ID: ${keywordId}`);
+
+    // Check if the ID is a temporary one
+    if (String(keywordId).startsWith('temp-')) {
+      alert("Questa keyword non è ancora salvata nel database. Verrà rimossa alla prossima ricarica della pagina.");
+      return;
+    }
+
+    // Find the keyword object to get the correct ID format
+    const keywordToDelete = keywords.find(kw => kw.id === keywordId);
+    console.log("Keyword to delete:", keywordToDelete);
+    
+    if (!keywordToDelete) {
+      alert("Keyword non trovata nella lista.");
+      return;
+    }
+    
+    // Use idobj if available
+    const actualId = keywordToDelete.idobj || keywordId;
+    console.log("Using ID for deletion:", actualId);
+
+    const confirmation = window.confirm("Sei sicuro di voler eliminare questa keyword?");
+    if (!confirmation) {
+      return; // Stop if the user cancels
+    }
+
+    const url = `${SERVERAPI}/api/axo_sel`;
+    const requestBody = {
+      Token: token,
+      IDOBJ: actualId, // Use the identified ID
+      idobj: actualId, // Also include lowercase version to be safe
+      DB: "progettiserpkeywords",
+      Modulo: "progettiserpkeywords",
+      Classe: "progettiserpkeywordssel",
+      Operazione: "DELETE" // Explicitly state the operation
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: "POST", // Still using POST as the endpoint seems generic
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        let errorMsg = `Errore API (${response.status}): ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || errorMsg;
+        } catch (parseError) {
+          console.error("Failed to parse error response:", parseError);
+        }
+        throw new Error(errorMsg);
+      }
+
+      const data = await response.json();
+
+      // Check response structure for success/failure indication from the API logic
+      if (data && (data.Errore || data.stato === 'KO')) {
+        // Handle specific error messages if available
+        if (data.Errore && data.Errore.includes("DELETE statement conflicted")) {
+           throw new Error("Eliminazione fallita: la keyword potrebbe essere collegata ad altri dati.");
+        }
+        throw new Error(data.Errore || 'Errore restituito dall\'API durante l\'eliminazione');
+      }
+
+      console.log(`Keyword with ID ${actualId} deleted successfully`);
+      // alert("Keyword eliminata con successo."); // Optional: Consider removing if reload is sufficient feedback
+
+      // Refresh data
+      if (reloadProjectData) {
+        reloadProjectData();
+      } else {
+        console.warn("reloadProjectData function not available. Keyword list may not update automatically.");
+      }
+
+    } catch (err) {
+      console.error(`Error deleting keyword ${actualId}:`, err);
+      alert(`Errore durante l'eliminazione della keyword: ${err.message}`);
+    }
   };
 
   const triggerCsvExport = (dateString) => {
