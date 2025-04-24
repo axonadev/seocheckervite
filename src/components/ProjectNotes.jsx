@@ -75,7 +75,7 @@ const ProjectNotes = ({ projectId, token }) => {
         setNotes((prec)=> [...prec, {
           ProgettiSerpNote_Nome: newNoteName,
           ProgettiSerpNote_Nota: newNoteText,
-          ProgettiSerpNote_Data: new Date().toISOString(),
+          S_INSTS: new Date().toISOString(),
         }]);
        
      
