@@ -1,6 +1,8 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Box } from '@mui/material';
 import LanguageIcon from '@mui/icons-material/Language';
+import Tooltip from '@mui/material/Tooltip';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import useKeywordCount from '../hooks/useKeywordCount';
 
 const Header = ({label="home"}) => {
@@ -41,9 +43,11 @@ const Header = ({label="home"}) => {
           >
             NKW: {keywordCount !== null ? keywordCount : '...'} / 60000
           </Typography>
-
+          {/* Tooltip informativo invio automatico */}
+          <Tooltip title="L'invio automatico invia il report del progetto in automatico ogni mese. Puoi attivarlo o disattivarlo dallo switch su ogni card progetto." placement="bottom">
+            <InfoOutlinedIcon sx={{ ml: 2, fontSize: 22, cursor: 'pointer' }} />
+          </Tooltip>
           <Typography 
-            
               variant="body2"
               sx={{
                 ml: 2,

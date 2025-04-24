@@ -6,6 +6,8 @@ import LanguageIcon from '@mui/icons-material/Language';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TagIcon from '@mui/icons-material/Tag';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import Switch from '@mui/material/Switch';
+import Tooltip from '@mui/material/Tooltip';
 import { FormatDate } from '../../utility/FormatDate';
 import useEnv from '../../hooks/useEnv';
 import { Fai, Scrivi } from '../../utility/callFetch';
@@ -22,6 +24,7 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
     message: "",
     severity: "success"
   });
+  const [autoSend, setAutoSend] = useState(project.autoSendReport || false);
   const { SERVERAPI } = useEnv();
   const token = localStorage.getItem("axo_token");
 
@@ -104,6 +107,10 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
           boxShadow: '0 3px 10px rgba(0,0,0,0.08)',
           transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
           cursor: 'pointer',
+          position: 'relative',
+          overflow: 'visible',
+          pt: 0.5,
+          pr: 0.5,
           '&:hover': {
             transform: 'translateY(-4px)',
             boxShadow: '0 6px 15px rgba(0,0,0,0.1)',
@@ -111,6 +118,32 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
         }}
         onClick={handleCardClick}
       >
+        <Box sx={{ position: 'absolute', top: 6, right: 6, zIndex: 3 }}>
+          <Tooltip title="invio automatico" placement="left">
+            <Switch
+              size="small"
+              checked={autoSend}
+              onClick={e => e.stopPropagation()}
+              onChange={e => setAutoSend(e.target.checked)}
+              sx={{
+                p: 0.2,
+                width: 32,
+                height: 18,
+                '& .MuiSwitch-switchBase': { p: 0.2 },
+                '& .MuiSwitch-thumb': { width: 14, height: 14 },
+                '& .MuiSwitch-track': {
+                  borderRadius: 9,
+                  minHeight: 16,
+                  height: 16,
+                  width: 28,
+                  backgroundColor: autoSend ? '#1976d2' : '#bdbdbd',
+                  opacity: 1,
+                }
+              }}
+              inputProps={{ 'aria-label': 'invio automatico' }}
+            />
+          </Tooltip>
+        </Box>
         <CardContent sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom fontWeight="600" color="primary">
             {project.ProgettiSerp_Nome || "Unnamed Project"}
