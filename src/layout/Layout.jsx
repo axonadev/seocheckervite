@@ -10,13 +10,14 @@ import styles from './Layout.module.css';
 
 import useDevice from "../hooks/useDevice";
 import Header from "../components/Header";
-import Footer from "../components/Footer";
 
-const Layout = ({ children, onProjectAdded, showSearchBar = true, onSearch = () => {} }) => {
+
+const Layout = ({ children, onProjectAdded, showSearchBar = true, onSearch = () => {} , label = "home"}) => {
   const naviga = useNavigate();
-  const { dimensions } = useDevice();
+  const { dimensions } = useDevice(); 
   const sessionToken = localStorage.getItem("axo_token");
   const dispatch = useDispatch();
+
 
   const getLogin = async () => {
     console.log(sessionToken, "sessionToken");
@@ -34,9 +35,9 @@ const Layout = ({ children, onProjectAdded, showSearchBar = true, onSearch = () 
 
   return (
     <Box sx={{ display: 'flex' }}>
-      <Header />
+      <Header label = {label}/>
       <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-        <SideMenu onProjectAdded={onProjectAdded} />
+        <SideMenu onProjectAdded={onProjectAdded}  />
         <Box
           sx={{
            marginLeft: "60px",

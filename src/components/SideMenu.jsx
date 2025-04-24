@@ -4,6 +4,7 @@ import LanguageIcon from '@mui/icons-material/Language';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ArticleIcon from '@mui/icons-material/Article';
 import StorageIcon from '@mui/icons-material/Storage';
+import NotesIcon from '@mui/icons-material/StickyNote2';
 import NewProjectPopup from './NewProjectPopup';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,11 +21,17 @@ const SideMenu = ({ onProjectAdded }) => {
   };
 
   const handleHomeClick = () => {
+
     navigate('/');
   };
 
   const handleArchiveClick = () => {
+
     navigate('/archive');
+  };
+
+  const handleAllNotesClick = () => {
+    navigate('/all-notes');
   };
 
   const handleProjectAdded = () => {
@@ -94,6 +101,12 @@ const SideMenu = ({ onProjectAdded }) => {
             onClick={handleArchiveClick}
           >
             <StorageIcon /> 
+          </IconButton>
+          <IconButton 
+            sx={{ color: '#fff' }}
+            onClick={handleAllNotesClick}
+          >
+            <NotesIcon />
           </IconButton>
         </Stack>
       </Box>

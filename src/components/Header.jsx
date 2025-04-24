@@ -1,8 +1,12 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Box } from '@mui/material';
 import LanguageIcon from '@mui/icons-material/Language';
+import useKeywordCount from '../hooks/useKeywordCount';
 
-const Header = () => {
+const Header = ({label="home"}) => {
+  const token = localStorage.getItem("axo_token");
+  const keywordCount = useKeywordCount(token);
+
   return (
     <>
       <AppBar
@@ -35,8 +39,22 @@ const Header = () => {
               opacity: 0.8
             }}
           >
-            NKW: 20693 / 60000
+            NKW: {keywordCount !== null ? keywordCount : '...'} / 60000
           </Typography>
+
+          <Typography 
+            
+              variant="body2"
+              sx={{
+                ml: 2,
+                opacity: 0.8,
+                flexGrow: 1,
+                textAlign: 'right'
+              }}
+          >
+            {label}
+          </Typography>
+
         </Toolbar>
       </AppBar>
     </>

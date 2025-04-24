@@ -59,7 +59,7 @@ const EditProjectPopup = ({ project, anchorEl, onClose, onProjectUpdated }) => {
       };
 
       const apiUrl = `${SERVERAPI}/api/axo_sel`; // Use the same endpoint as Scrivi expects
-      const response = await Scrivi(apiUrl, token, project.IDOBJ, "progettiserp", "progettiserpsel", updatedProjectData);
+      const response = await Scrivi(apiUrl, token, project.IDOBJ, "progettiserp", "progettiserpsel", updatedProjectData); 
 
       console.log("Project update response:", response);
 
