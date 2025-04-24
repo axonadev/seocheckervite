@@ -14,7 +14,7 @@ import { Link, useNavigate } from 'react-router-dom';
 const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(project.ProgettiSerp_Stato === 10);
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [openMessaggioArchivio, setOpenMessaggioArchivio] = useState(false);
   const [snackbar, setSnackbar] = useState({
@@ -51,25 +51,27 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
     }
   };
 
-  const handleUpdateClick = async (event) => {
+  const handleReloadProject = async (event) => {
     event.stopPropagation();
     event.preventDefault();
-    if (!project.IDOBJ || isUpdating || loading) return;
-
-    setIsUpdating(true);
-    setUpdateSuccess(false);
-
+    if (!project.IDOBJ) {
+      setSnackbar({ open: true, message: "ID progetto non valido", severity: "error" });
+      return;
+    }
+    setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setUpdateSuccess(true);
-      setTimeout(() => setUpdateSuccess(false), 2000);
+      const apiUrl = `${SERVERAPI}/api/axo_sel`;
+      const UpdPj = { IDOBJ: project.IDOBJ, ProgettiSerp_Stato: 10 };
+      const response = await Scrivi(apiUrl, token, project.IDOBJ, "progettiserp", "progettiserpsel", UpdPj);
+      onProjectUpdate(project.IDOBJ);
     } catch (error) {
-      console.error("Error updating project:", error);
-      setSnackbar({ open: true, message: `Errore aggiornamento: ${error.message}`, severity: "error" });
+      console.error("Error archiving project:", error);
     } finally {
-      setIsUpdating(false);
+      setLoading(false);    setIsUpdating(true);
     }
   };
+
+
 
   const handleOpenArchiveModal = (event) => {
     event.stopPropagation();
@@ -117,7 +119,22 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
           <Box display="flex" alignItems="center" mb={2}>
             <LanguageIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />
             <Typography color="text.secondary" variant="body2">
-              {domainToDisplay}
+              <a
+                href={domainToDisplay.startsWith('http') ? domainToDisplay : `https://${domainToDisplay}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: 'inherit',
+                  textDecoration: 'none',
+                  wordBreak: 'break-all',
+                  transition: 'text-decoration 0.2s',
+                }}
+                onMouseOver={e => e.currentTarget.style.textDecoration = 'underline'}
+                onMouseOut={e => e.currentTarget.style.textDecoration = 'none'}
+                onClick={e => e.stopPropagation()}
+              >
+                {domainToDisplay}
+              </a>
             </Typography>
           </Box>
 
@@ -163,7 +180,7 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
                 borderRadius: 2,
                 flex: 1,
               }}
-              onClick={handleUpdateClick}
+              onClick={handleReloadProject}
               disabled={loading || isUpdating}
             >
               Aggiorna

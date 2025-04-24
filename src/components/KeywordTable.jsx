@@ -83,6 +83,7 @@ const KeywordTable = ({
               <MenuItem value="Spagna">google.es - Spagna</MenuItem>
               <MenuItem value="Regno Unito">google.co.uk - Regno Unito</MenuItem>
               <MenuItem value="Francia">google.fr - Francia</MenuItem>
+              <MenuItem value="Portogallo">google.pt - Portogallo</MenuItem>
             </Select>
           </FormControl>
           <IconButton
