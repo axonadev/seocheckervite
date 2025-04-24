@@ -19,8 +19,8 @@ export default function useKeywordCount(token) {
         console.log("DEBUG keywords response", response);
         const keywords = response?.Itemset?.SEO_STATKEYWORDS;
         let count = 0;
-        if (Array.isArray(keywords) && keywords.length === 1 && keywords[0].count) {
-          count = keywords[0].count;
+        if (Array.isArray(keywords) && keywords.length > 0 && keywords[0].NumeroKeywords) {
+          count = keywords[0].NumeroKeywords;
         } else if (Array.isArray(keywords)) {
           count = keywords.length;
         } else if (typeof keywords === 'number') {
