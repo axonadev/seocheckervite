@@ -3,10 +3,11 @@ import { Box, Typography, Paper } from "@mui/material";
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { calculateKeywordPositionData } from "../utility/chartUtils"; // Import the utility function
+import ProjectNotes from "./ProjectNotes";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const KeywordPositionChart = ({ keywords }) => {
+const KeywordPositionChart = ({ keywords, projectId, token }) => {
   // Use the utility function to calculate data
   const { positionData, totalKeywords: totalKeywordsInChart } = calculateKeywordPositionData(keywords);
 
@@ -121,6 +122,10 @@ const KeywordPositionChart = ({ keywords }) => {
         >
           {totalKeywordsInChart}
         </Typography>
+      </Box>
+      {/* Box note progetto sotto la legenda/grafico */}
+      <Box sx={{ width: '100%', mt: 3 }}>
+        <ProjectNotes projectId={projectId} token={token} />
       </Box>
     </Paper>
   );

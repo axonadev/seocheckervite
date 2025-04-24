@@ -373,7 +373,7 @@ const ProjectDetail = () => {
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <KeywordPositionChart keywords={keywords} />
+            <KeywordPositionChart keywords={keywords} projectId={project?.IDOBJ} token={token} />
           </Grid>
         </Grid>
 
