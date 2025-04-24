@@ -53,7 +53,55 @@ const KeywordTable = ({
         return val;
       },
     },
-    { field: "KeywordSerp_URL", headerName: "URL", flex: 1, minWidth: 250 },
+    {
+      field: "KeywordSerp_URL",
+      headerName: "URL",
+      flex: 1,
+      minWidth: 250,
+      renderCell: (params) => {
+        const url = params.value;
+        const [hovered, setHovered] = React.useState(false);
+        const [ctrlPressed, setCtrlPressed] = React.useState(false);
+        React.useEffect(() => {
+          const handleKeyDown = (e) => {
+            if (e.key === "Control") setCtrlPressed(true);
+          };
+          const handleKeyUp = (e) => {
+            if (e.key === "Control") setCtrlPressed(false);
+          };
+          window.addEventListener("keydown", handleKeyDown);
+          window.addEventListener("keyup", handleKeyUp);
+          return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("keyup", handleKeyUp);
+          };
+        }, []);
+        if (!url) return "-";
+        const isClickable = hovered && ctrlPressed;
+        return (
+          <span
+            style={{
+              color: isClickable ? '#1976d2' : '#333',
+              textDecoration: isClickable ? 'underline' : 'none',
+              cursor: isClickable ? 'pointer' : 'default',
+              transition: 'color 0.2s',
+              wordBreak: 'break-all',
+            }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            onClick={e => {
+              if (isClickable) {
+                window.open(url.startsWith('http') ? url : `https://${url}`, '_blank', 'noopener');
+                e.stopPropagation();
+              }
+            }}
+            title={isClickable ? 'Apri URL (Ctrl+Click)' : 'Tieni premuto Ctrl e passa sopra per aprire'}
+          >
+            {url}
+          </span>
+        );
+      },
+    },
   ];
 
   return (
