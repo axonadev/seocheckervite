@@ -13,6 +13,7 @@ import Dashboard from "./pages/protected/Dashboard.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
 import ProjectDetail from "./pages/ProjectDetail.jsx"; // Import the new page
 import AllNotesPage from "./pages/AllNotesPage.jsx"; // Import the new page
+import ClientProductsArchive from "./pages/protected/ClientProductsArchive";
 
 import { ThemeProvider } from '@mui/material/styles';
 import { theme } from './theme/theme';
@@ -34,6 +35,7 @@ function App() {
           <Route path={"/archive"} element={<Archive />}></Route>
           <Route path={"/projects/:id"} element={<ProjectDetail />}></Route>
           <Route path={"/all-notes"} element={<AllNotesPage token={localStorage.getItem("axo_token")} />} />
+          <Route path={"/client-products-archive"} element={<ClientProductsArchive />} />
           <Route element={<InvisibleRoutesIfAuth />}>
             <Route path={"/login"} element={<LoginPage />}></Route>
           </Route>

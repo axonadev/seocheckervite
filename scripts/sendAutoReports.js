@@ -18,7 +18,7 @@ async function getProjectsWithAutoSend() {
     {
       IDOBJ: 123,
       azienda: '06087680960',
-      email: 'jg7ygslvs4@zudpck.com',
+      email: 'cioppi222@gmail.com',
       ProgettiSerp_Nome: 'Nome Progetto'
     }
     // ...altri progetti

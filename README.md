@@ -71,5 +71,5 @@ Possibilità di scegliere quali progetti impostare con invio automatico (switch 
 In pratica vorremmo poter inserire abbinato all’elenco dei clienti, i prodotti.    
 ESEMPIO
 AM PARTNERS 	SEO	MULTILANDING 	NEWS		INIZIO CONTRATTO
-SI	SI			1 al mese	APRILE 2025
+     SI	      SI          1 al mese	   APRILE 2025
 Con possibilità di avere poi generato un file excell con tutti i clienti organizzati (stile tabelle) e con possibilità di estrapolarlo o visualizzarlo online  in una pagina con tutti i dati visibili. 

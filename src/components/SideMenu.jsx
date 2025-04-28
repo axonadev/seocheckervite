@@ -5,6 +5,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ArticleIcon from '@mui/icons-material/Article';
 import StorageIcon from '@mui/icons-material/Storage';
 import NotesIcon from '@mui/icons-material/StickyNote2';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import NewProjectPopup from './NewProjectPopup';
 import { useNavigate } from 'react-router-dom';
 
@@ -32,6 +33,10 @@ const SideMenu = ({ onProjectAdded }) => {
 
   const handleAllNotesClick = () => {
     navigate('/all-notes');
+  };
+
+  const handleClientProductsArchiveClick = () => {
+    navigate('/client-products-archive');
   };
 
   const handleProjectAdded = () => {
@@ -107,6 +112,12 @@ const SideMenu = ({ onProjectAdded }) => {
             onClick={handleAllNotesClick}
           >
             <NotesIcon />
+          </IconButton>
+          <IconButton 
+            sx={{ color: '#fff' }}
+            onClick={handleClientProductsArchiveClick}
+          >
+            <ShoppingCartIcon />
           </IconButton>
         </Stack>
       </Box>
