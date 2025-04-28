@@ -74,7 +74,21 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
     }
   };
 
-
+  const handleToggleAutoSend = async (e) => {
+    e.stopPropagation();
+    const newValue = !autoSend;
+    setAutoSend(newValue);
+    try {
+      const apiUrl = `${SERVERAPI}/api/axo_sel`;
+      const UpdPj = { IDOBJ: project.IDOBJ, ProgettiSerp_AutoSend: newValue ? 1 : 0 };
+      await Scrivi(apiUrl, token, project.IDOBJ, "progettiserp", "progettiserpsel", UpdPj);
+      setSnackbar({ open: true, message: newValue ? 'Invio automatico attivato' : 'Invio automatico disattivato', severity: 'success' });
+      if (onProjectUpdate) onProjectUpdate(project.IDOBJ);
+    } catch (err) {
+      setSnackbar({ open: true, message: 'Errore salvataggio invio automatico', severity: 'error' });
+      setAutoSend(!newValue); // rollback
+    }
+  };
 
   const handleOpenArchiveModal = (event) => {
     event.stopPropagation();
@@ -123,8 +137,8 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
             <Switch
               size="small"
               checked={autoSend}
-              onClick={e => e.stopPropagation()}
-              onChange={e => setAutoSend(e.target.checked)}
+              onClick={handleToggleAutoSend}
+              onChange={handleToggleAutoSend}
               sx={{
                 p: 0.2,
                 width: 32,
