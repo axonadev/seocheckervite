@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardContent, Typography, Button, Box, Chip, Stack, Snackbar, Alert, Modal, CircularProgress, IconButton } from '@mui/material';
+import { Card, CardContent, Typography, Button, Box, Chip, Stack, Snackbar, Alert, Modal, CircularProgress, IconButton, CardMedia, Skeleton } from '@mui/material';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import UpdateIcon from '@mui/icons-material/Update';
 import LanguageIcon from '@mui/icons-material/Language';
@@ -27,6 +27,14 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
   const [autoSend, setAutoSend] = useState(project.autoSendReport || false);
   const { SERVERAPI } = useEnv();
   const token = localStorage.getItem("axo_token");
+
+  // --- Image State and URL ---
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+  const aziendaPIVA = '06087680960';
+  const projectId = project.IDOBJ;
+  const imageUrl = projectId ? `/personal/${aziendaPIVA}/img/${projectId}.jpeg` : null;
+  // --- End Image State and URL ---
 
   const domainToDisplay = project.ProgettiSerp_DNS || project.domain || "No domain";
   const keywordCount = project.totaleKeyword || project.keywords || 0;
@@ -111,6 +119,17 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
     }
   };
 
+  const handleImageLoad = () => {
+    setImageLoading(false);
+    setImageError(false);
+  };
+
+  const handleImageError = (e) => {
+    console.error("Error loading image:", imageUrl, e);
+    setImageLoading(false);
+    setImageError(true);
+  };
+
   return (
     <>
       <Card
@@ -125,6 +144,8 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
           overflow: 'visible',
           pt: 0.5,
           pr: 0.5,
+          display: 'flex',
+          flexDirection: 'column',
           '&:hover': {
             transform: 'translateY(-4px)',
             boxShadow: '0 6px 15px rgba(0,0,0,0.1)',
@@ -132,6 +153,51 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
         }}
         onClick={handleCardClick}
       >
+        
+        {imageUrl && (
+          <Box sx={{ height: 140, position: 'relative' }}> {/* Container for positioning */}
+            {imageLoading && (
+              <Skeleton
+                variant="rectangular"
+                height="100%" // Fill container
+                animation="wave"
+                sx={{ position: 'absolute', top: 0, left: 0, width: '100%' }} // Overlay
+              />
+            )}
+            <CardMedia
+              component="img"
+              height="140"
+              image={imageUrl}
+              alt={`Screenshot for ${project.ProgettiSerp_Nome || 'project'}`}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+              sx={{
+                objectFit: 'cover',
+                // Hide the image element itself while loading or if there's an error
+                // It will be revealed once loaded and skeleton disappears
+                opacity: imageLoading || imageError ? 0 : 1,
+                transition: 'opacity 0.3s', // Optional fade-in
+                height: '100%', // Fill container
+                width: '100%'
+              }}
+            />
+            {imageError && !imageLoading && (
+              // Show the error placeholder only after loading attempt failed
+              <Box
+                height="100%" // Fill container
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                bgcolor="grey.200"
+                sx={{ position: 'absolute', top: 0, left: 0, width: '100%' }} // Overlay
+              >
+                <Typography variant="caption" color="text.secondary">Immagine non disponibile</Typography>
+              </Box>
+            )}
+          </Box>
+        )}
+        {/* --- End Image Display --- */}
+
         <Box sx={{ position: 'absolute', top: 6, right: 6, zIndex: 3 }}>
           <Tooltip title="invio automatico" placement="left">
             <Switch
@@ -158,7 +224,7 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
             />
           </Tooltip>
         </Box>
-        <CardContent sx={{ p: 3 }}>
+        <CardContent sx={{ p: 3, flexGrow: 1 }}>
           <Typography variant="h6" gutterBottom fontWeight="600" color="primary">
             {project.ProgettiSerp_Nome || "Unnamed Project"}
           </Typography>
