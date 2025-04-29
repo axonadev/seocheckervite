@@ -301,7 +301,7 @@ const ProjectDetail = () => {
   };
 
   const triggerPdfExport = (dateString) => {
-    generatePdfReport(project, keywords, dateString, logoImageDataUrl, posizionamentoImageDataUrl);
+    generatePdfReport(project, keywords, dateString, logoImageDataUrl, posizionamentoImageDataUrl, true, SERVERAPI);
     handleCloseExportPdfDate();
   };
 

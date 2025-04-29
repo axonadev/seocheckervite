@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { FormatDate } from "./FormatDate"; // Ensure FormatDate.js exists and exports FormatDate correctly
+import { FormatDate } from "./FormatDate";
+import { uploadPdfReport } from "./apiUtils";
 
 /**
  * Generates and saves a CSV report for keywords.
@@ -8,7 +9,7 @@ import { FormatDate } from "./FormatDate"; // Ensure FormatDate.js exists and ex
  * @param {Array} keywords - Array of keyword objects.
  * @param {string|null} dateString - The selected date string for the report filename, or null for current date.
  */
-export const generateCsvReport = (project, keywords, dateString) => { // Ensure 'export const' is used
+export const generateCsvReport = (project, keywords, dateString) => {
   if (!keywords || keywords.length === 0) {
       console.warn("CSV Export: No keywords to export.");
       alert("Nessuna keyword da esportare.");
@@ -43,18 +44,41 @@ export const generateCsvReport = (project, keywords, dateString) => { // Ensure 
 };
 
 /**
+ * Converts a PDF document to a Base64 string without the data URL prefix.
+ * @param {jsPDF} pdfDoc - The jsPDF document.
+ * @returns {Promise<string>} A promise that resolves to the Base64 string.
+ */
+const convertPdfToBase64 = async (pdfDoc) => {
+  // Get PDF as blob with arrayBuffer
+  const pdfBlob = pdfDoc.output('blob');
+  
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // Remove the "data:application/pdf;base64," prefix
+      const base64 = reader.result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(pdfBlob);
+  });
+};
+
+/**
  * Generates and saves a PDF report for keywords in top 10 positions.
  * @param {Object} project - The project object, containing ProgettiSerp_Nome.
  * @param {Array} keywords - Array of keyword objects.
  * @param {string|null} dateString - The selected date string for the report, or null for current date.
  * @param {string|null} logoImageDataUrl - Base64 encoded logo image.
  * @param {string|null} posizionamentoImageDataUrl - Base64 encoded positioning image.
+ * @param {boolean} saveToServer - Whether to save the PDF to the server (default: true).
+ * @param {string|null} SERVERAPI - The server API URL (required if saveToServer is true).
  */
-export const generatePdfReport = (project, keywords, dateString, logoImageDataUrl, posizionamentoImageDataUrl) => { // Ensure 'export const' is used
+export const generatePdfReport = async (project, keywords, dateString, logoImageDataUrl, posizionamentoImageDataUrl, saveToServer = true, SERVERAPI = null) => {
   if (!keywords || keywords.length === 0) {
-      console.warn("PDF Export: No keywords data available.");
-      alert("Nessuna keyword disponibile per generare il PDF.");
-      return;
+    console.warn("PDF Export: No keywords data available.");
+    alert("Nessuna keyword disponibile per generare il PDF.");
+    return;
   }
 
   const filteredKeywords = keywords.filter(kw => {
@@ -134,6 +158,38 @@ export const generatePdfReport = (project, keywords, dateString, logoImageDataUr
   const emailColumnX = leftMargin + 80; teamData.forEach((member, index) => { const currentY = yPosition + index * lineHeight * 1.2; doc.setFont(undefined, "bold"); doc.text(member[0], leftMargin, currentY); doc.setFont(undefined, "normal"); doc.text(member[1], emailColumnX, currentY); });
   yPosition += lineHeight * 7; doc.setFont(undefined, "bold"); doc.text("PROMEMORIA", leftMargin, yPosition); yPosition += lineHeight * 1.2; doc.setFont(undefined, "normal"); doc.text("Vi ricordiamo di segnalarci eventuali prodotti/servizi/ o parole chiave importanti da inserire all'interno del piano editoriale di content marketing.", leftMargin, yPosition);
 
-  // Save the PDF
+  // Save the PDF locally
   doc.save(`${filenameBase}.pdf`);
+  
+  // Save the PDF on the server if required
+  if (saveToServer && project && project.IDOBJ) {
+    try {
+      const token = localStorage.getItem("axo_token");
+      
+      if (!token || !SERVERAPI) {
+        console.error("Cannot upload PDF: missing token or SERVERAPI");
+        return;
+      }
+      
+      const base64PDF = await convertPdfToBase64(doc);
+      
+      // Format the date for the server (YYYY-MM-DD)
+      const reportDate = dateString ? new Date(dateString) : new Date();
+      
+      // Upload the PDF to the server
+      await uploadPdfReport(
+        project.IDOBJ,
+        token,
+        SERVERAPI,
+        base64PDF,
+        filenameBase,
+        reportDate
+      );
+      
+      console.log(`PDF saved on server for project ${project.IDOBJ}`);
+    } catch (error) {
+      console.error("Error uploading PDF to server:", error);
+      alert(`Errore durante il salvataggio del PDF sul server: ${error.message}`);
+    }
+  }
 };

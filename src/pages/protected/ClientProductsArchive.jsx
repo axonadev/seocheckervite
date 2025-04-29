@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { DataGrid } from '@mui/x-data-grid';
 import Layout from "../../layout/Layout";
-import { Select, MenuItem, TextField } from '@mui/material';
+import { Select, MenuItem, TextField, Button } from '@mui/material';
+import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import useEnv from "../../hooks/useEnv";
-import { Scrivi } from "../../utility/callFetch";
+import { Scrivi, Leggi } from "../../utility/callFetch";
 
 const monthOptions = [
   "GENNAIO", "FEBBRAIO", "MARZO", "APRILE", "MAGGIO", "GIUGNO",
@@ -29,8 +30,8 @@ const columns = [
         sx={{ minWidth: 80 }}
         autoFocus
       >
-        <MenuItem value="SI">SI</MenuItem>
-        <MenuItem value="NO">NO</MenuItem>
+        <MenuItem value={true}>SI</MenuItem>
+        <MenuItem value={false}>NO</MenuItem>
       </Select>
     ),
     sortable: false
@@ -49,8 +50,8 @@ const columns = [
         sx={{ minWidth: 80 }}
         autoFocus
       >
-        <MenuItem value="SI">SI</MenuItem>
-        <MenuItem value="NO">NO</MenuItem>
+        <MenuItem value={true}>SI</MenuItem>
+        <MenuItem value={false}>NO</MenuItem>
       </Select>
     ),
     sortable: false
@@ -134,69 +135,194 @@ function exportToCSV(clients) {
 }
 
 const ClientProductsArchive = () => {
-  const { SERVERAPI } = useEnv();
+  const { SERVERAPI, AZIENDA } = useEnv();
   const token = localStorage.getItem("axo_token");
   const [clients, setClients] = useState([]);
 
   useEffect(() => {
     const loadClients = async () => {
       try {
-        const url = `${SERVERAPI}/api/axo_sel/${token}/progettiserp/progettiserpsel/leggi`;
-        const response = await fetch(url);
-        const data = await response.json();
-        const clienti = (data?.Itemset?.v_progettiserp || []).map(item => ({
+
+        const DB = "Seo_ProgettiArticoli";
+
+
+
+        // Prima controlla se esiste già un record
+        const leggiResponse = await Leggi(
+          SERVERAPI,
+          token,
+          DB,
+          `WHERE AZIENDA = '${AZIENDA}' `
+        );
+
+
+        const data = await leggiResponse
+
+
+        console.log('Leggi response:', data);
+        const clienti = (data?.Itemset?.Seo_ProgettiArticoli || []).map(item => ({
           id: item.IDOBJ,
           name: item.ProgettiSerp_Nome || item.nome || `Progetto ${item.IDOBJ}`,
-          seo: "NO",
-          multilanding: "NO",
-          news: "",
-          inizioContratto: "",
+          seo: item.Seo? "SI":"NO" || "NO",
+          idseo: item.IDSeo,
+          multilanding: item.MULTILANDING? "SI":"NO" || "NO",
+          idmultilanding: item.IDMULTILANDING,
+          news: item.ProgettiSerp_News || "",
+          inizioContratto: item.ProgettiSerp_InizioContratto || "",
         }));
         setClients(clienti);
       } catch (e) {
+        console.error('Error loading clients:', e);
         setClients([]);
       }
     };
     loadClients();
   }, [SERVERAPI, token]);
 
-  // Funzione per salvare le modifiche usando la funzione Scrivi
-  const saveClientField = async (id, field, value) => {
+  const saveClientField = async (projectId, field, value, recordId) => {
     try {
-      const DB = "progettiserp";
-      const Classe = "progettiserpsel";
-      // Mappa i campi della tabella ai nomi delle variabili del backend
-      const fieldMap = {
-        seo: "progettiserp_seo",
-        multilanding: "progettiserp_multilanding",
-        news: "progettiserp_news",
-        inizioContratto: "progettiserp_iniziocontratto"
-      };
-      const backendField = fieldMap[field] || field;
-      const jsonObj = { IDOBJ: id, [backendField]: value };
-      await Scrivi(SERVERAPI, token, id, DB, Classe, jsonObj);
+      if (field === "seo" || field === "multilanding") {
+        const DB = "ProgettiSerpProdotti";
+        const Classe = "ProgettiSerpProdotti";
+        const articolo = field === "seo" ? 1 : 2;
+
+        // Prima controlla se esiste già un record
+        const leggiResponse = await Leggi(
+          SERVERAPI,
+          token,
+          DB,
+          `WHERE AZIENDA = '${AZIENDA}' AND PIDOBJ = '${projectId}' AND ProgettiSerpProdotti_Articolo = ${articolo}`
+        );
+        console.log('Leggi response:', leggiResponse);
+
+        const jsonObj = {
+          ProgettiSerpProdotti_Articolo: articolo,
+          ProgettiSerpProdotti_Valore: value,
+          AZIENDA,
+          PIDOBJ: projectId  // Aggiungiamo PIDOBJ al payload
+        };
+
+        const idobj = recordId || 0;  // Usa 0 per nuovo record, altrimenti usa recordId esistente
+
+        console.log(`Saving ${field} - IDOBJ: ${idobj}, Payload:`, jsonObj);
+        const scrittoResponse = await Scrivi(SERVERAPI, token, idobj, DB, Classe, jsonObj);
+        console.log('Scrivi Response:', scrittoResponse);
+
+        // Ricarica i dati dopo il salvataggio
+        const reloadResponse = await Leggi(
+          SERVERAPI,
+          token,
+          DB,
+          `WHERE AZIENDA = '${AZIENDA}' AND PIDOBJ = '${projectId}' AND ProgettiSerpProdotti_Articolo = ${articolo}`
+        );
+        console.log('Reload response:', reloadResponse);
+      } else if (field === "news" || field === "inizioContratto") {
+        // Salva su progettiserp
+        const DB = "progettiserp";
+        const Classe = "progettiserpsel";
+        const fieldMap = {
+          news: "ProgettiSerp_News",
+          inizioContratto: "ProgettiSerp_InizioContratto"
+        };
+        const backendField = fieldMap[field];
+        const jsonObj = { 
+          IDOBJ: projectId,
+          [backendField]: value,
+          AZIENDA 
+        };
+        console.log(`Attempting to save ${field}:`, {
+          projectId,
+          field,
+          value,
+          backendField,
+          jsonObj
+        });
+
+        // Prima leggiamo il record esistente
+        const leggiResponse = await Leggi(
+          SERVERAPI,
+          token,
+          DB,
+          `WHERE AZIENDA = '${AZIENDA}' AND IDOBJ = '${projectId}'`
+        );
+        console.log('Leggi response for project:', leggiResponse);
+
+        // Salviamo il record
+        const scrittoResponse = await Scrivi(SERVERAPI, token, projectId, DB, Classe, jsonObj);
+        console.log('Scrivi Response:', scrittoResponse);
+
+        // Verifichiamo il salvataggio
+        const verifyResponse = await Leggi(
+          SERVERAPI,
+          token,
+          DB,
+          `WHERE AZIENDA = '${AZIENDA}' AND IDOBJ = '${projectId}'`
+        );
+        console.log('Verify after save:', verifyResponse);
+      }
     } catch (e) {
-      // Gestione errore silenziosa, puoi aggiungere notifiche se necessario
+      console.error(`Error saving field ${field}:`, e);
+      throw e; // Rilanciamo l'errore per gestirlo nel processRowUpdate
     }
   };
 
-  // Aggiorna lo stato clients in tempo reale quando una riga viene modificata
   const processRowUpdate = async (newRow, oldRow) => {
-    const updatedClients = clients.map(c => c.id === newRow.id ? { ...c, ...newRow } : c);
-    setClients(updatedClients);
-    // Salva solo i campi modificati
-    for (const key of Object.keys(newRow)) {
-      if (newRow[key] !== oldRow[key] && ["seo", "multilanding", "news", "inizioContratto"].includes(key)) {
-        await saveClientField(newRow.id, key, newRow[key]);
+    try {
+      console.log('Processing row update:', {
+        oldRow,
+        newRow,
+        changes: {
+          seoChanged: newRow.seo !== oldRow.seo,
+          multilandingChanged: newRow.multilanding !== oldRow.multilanding,
+          newsChanged: newRow.news !== oldRow.news,
+          inizioContrattoChanged: newRow.inizioContratto !== oldRow.inizioContratto
+        }
+      });
+
+      const updatedClients = clients.map(c => c.id === newRow.id ? { ...c, ...newRow } : c);
+      setClients(updatedClients);
+      
+      if (newRow.seo !== oldRow.seo) {
+        await saveClientField(newRow.id, "seo", newRow.seo, newRow.idseo);
       }
+      if (newRow.multilanding !== oldRow.multilanding) {
+        await saveClientField(newRow.id, "multilanding", newRow.multilanding, newRow.idmultilanding);
+      }
+      if (newRow.news !== oldRow.news) {
+        console.log('Saving news change:', {
+          id: newRow.id,
+          oldNews: oldRow.news,
+          newNews: newRow.news
+        });
+        await saveClientField(newRow.id, "news", newRow.news);
+      }
+      if (newRow.inizioContratto !== oldRow.inizioContratto) {
+        console.log('Saving inizioContratto change:', {
+          id: newRow.id,
+          oldInizioContratto: oldRow.inizioContratto,
+          newInizioContratto: newRow.inizioContratto
+        });
+        await saveClientField(newRow.id, "inizioContratto", newRow.inizioContratto);
+      }
+      
+      return newRow;
+    } catch (e) {
+      console.error('Error in processRowUpdate:', e);
+      throw e;
     }
-    return newRow;
   };
 
   return (
-    <Layout label="Archivio Prodotti Clienti" showSearchBar={false}>
+    <Layout label="Client product" showSearchBar={false}>
       <div style={{ padding: 24 }}>
-        <button onClick={() => exportToCSV(clients)} style={{ marginBottom: 16 }}>Esporta in Excel (CSV)</button>
+        <Button
+          variant="contained"
+          startIcon={<DownloadOutlinedIcon />}
+          onClick={() => exportToCSV(clients)}
+          sx={{ marginBottom: 2 }}
+        >
+          Esporta in Excel (CSV)
+        </Button>
         <div style={{ width: '100%', background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #0001' }}>
           <DataGrid
             rows={clients}
