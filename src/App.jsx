@@ -48,9 +48,6 @@ function App() {
     <ThemeProvider theme={theme}>
       <Router>
         <ScrollToTop />
-        <header>
-          {/* Add your header content here */}
-        </header>
         <RouteTransition />
       </Router>
     </ThemeProvider>

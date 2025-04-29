@@ -44,7 +44,7 @@ const Header = ({label="home"}) => {
             NKW: {keywordCount !== null ? keywordCount : '...'} / 60000
           </Typography>
           {/* Tooltip informativo invio automatico */}
-          <Tooltip title="L'invio automatico invia il report del progetto in automatico ogni mese. Puoi attivarlo o disattivarlo dallo switch su ogni card progetto." placement="bottom">
+          <Tooltip title="L'invio automatico invia il report del progetto ogni mese. Puoi attivarlo o disattivarlo dallo switch su ogni card progetto." placement="bottom">
             <InfoOutlinedIcon sx={{ ml: 2, fontSize: 22, cursor: 'pointer' }} />
           </Tooltip>
           <Typography 
