@@ -5,7 +5,7 @@ import ProjectGrid from "../components/ProjectGrid/ProjectGrid";
 import SearchBar from "../components/SearchBar";
 import useEnv from "../hooks/useEnv"; // Assicurati di avere questo hook per l'uso dell'ambiente
 
-const Homepage = () => {
+const Homepage = ({ onLoadStart, onLoadComplete }) => {
   const projects = Array.from({ length: 12 }, (_, i) => ({
     name: `Project ${i + 1}`,
     domain: `example${i + 1}.com`,
@@ -101,8 +101,15 @@ const Homepage = () => {
   };
 
   useEffect(() => {
-    loadDati();
-    loadKeywords();
+    onLoadStart?.();
+    const loadAllData = async () => {
+      try {
+        await Promise.all([loadDati(), loadKeywords()]);
+      } finally {
+        onLoadComplete?.();
+      }
+    };
+    loadAllData();
   }, []);
 
   // Funzione per gestire l'aggiornamento del termine di ricerca

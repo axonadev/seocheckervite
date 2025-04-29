@@ -55,15 +55,15 @@ const AddKeywordPopover = ({
           <Typography variant="h6">Nuova Key</Typography>
         </Box>
         <TextField
-          label="Keyword"
+          label="Keyword (una per riga)" // Updated label
           variant="filled"
           size="small"
           fullWidth
+          multiline // Added multiline prop
+          rows={4} // Added rows prop for initial height
           value={newKeywordInput}
           onChange={onNewKeywordInputChange}
-          onKeyPress={(e) => {
-            if (e.key === "Enter") onAddKeyword();
-          }}
+          // Removed onKeyPress handler to allow Enter for new lines
           sx={{ mb: 1, backgroundColor: "rgba(0, 0, 0, 0.06)" }}
           InputProps={{ disableUnderline: true }}
         />

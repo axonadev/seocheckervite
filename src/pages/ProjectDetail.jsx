@@ -141,12 +141,31 @@ const ProjectDetail = () => {
   const handleCloseEditProject = () => setEditProjectAnchorEl(null);
 
   const handleAddKeyword = async () => {
-    const keywordToAdd = newKeywordInput.trim();
-    if (keywordToAdd && project?.IDOBJ) {
-      const url = `${SERVERAPI}/api/axo_sel`;
+    // Split input by newline, trim whitespace, and filter out empty lines
+    const keywordsToAdd = newKeywordInput
+      .split('\n')
+      .map(kw => kw.trim())
+      .filter(kw => kw !== "");
 
+    if (keywordsToAdd.length === 0) {
+      alert("Inserisci almeno una keyword valida.");
+      return;
+    }
+
+    if (!project?.IDOBJ) {
+      alert("ID Progetto non trovato.");
+      return;
+    }
+
+    const url = `${SERVERAPI}/api/axo_sel`;
+    let successCount = 0;
+    let errorCount = 0;
+    const errors = [];
+
+    // Process each keyword individually
+    for (const keywordToAdd of keywordsToAdd) {
       const keywordData = {
-        progettiserpkeywords_parole: keywordToAdd, // Renamed from KeywordSerp_Keyword
+        progettiserpkeywords_parole: keywordToAdd,
         KeywordSerp_ProgettiSerp_id: project.IDOBJ,
         KeywordSerp_Azienda_id: AZIENDA,
         pidobj: project.IDOBJ,
@@ -171,7 +190,7 @@ const ProjectDetail = () => {
         });
 
         if (!response.ok) {
-          let errorMsg = `Errore API: ${response.status} ${response.statusText}`;
+          let errorMsg = `Errore API (${response.status}) per '${keywordToAdd}': ${response.statusText}`;
           try {
             const errorData = await response.json();
             errorMsg = errorData.message || errorData.Errore || errorMsg;
@@ -182,28 +201,33 @@ const ProjectDetail = () => {
         const data = await response.json();
 
         if (data && (data.Errore || data.stato === 'KO')) {
-          throw new Error(data.Errore || 'Errore restituito dall\'API durante l\'aggiunta della keyword');
+          throw new Error(data.Errore || `Errore API durante l'aggiunta di '${keywordToAdd}'`);
         }
-
-        console.log("Keyword added successfully");
-        handleCloseAddKeyword();
-
-        if (reloadProjectData) {
-          reloadProjectData();
-        } else {
-          console.warn("reloadProjectData function not available from useProjectData. Keyword list may not update automatically.");
-        }
+        successCount++;
+        console.log(`Keyword '${keywordToAdd}' added successfully`);
 
       } catch (err) {
-        console.error("Error adding keyword:", err);
-        alert(`Errore durante l'aggiunta della keyword: ${err.message}`);
+        errorCount++;
+        errors.push(err.message);
+        console.error(`Error adding keyword '${keywordToAdd}':`, err);
       }
+    }
+
+    // After processing all keywords
+    if (errorCount > 0) {
+      alert(`Aggiunte ${successCount} keywords con successo.\nErrore durante l'aggiunta di ${errorCount} keywords:\n- ${errors.join('\n- ')}`);
     } else {
-      if (!keywordToAdd) {
-        alert("Inserisci una keyword valida.");
-      } else {
-        alert("ID Progetto non trovato.");
-      }
+      console.log(`Successfully added ${successCount} keywords.`);
+      // Optionally show a success message
+      // alert(`Aggiunte ${successCount} keywords con successo.`);
+    }
+
+    // Close popover and refresh data regardless of partial errors
+    handleCloseAddKeyword();
+    if (reloadProjectData) {
+      reloadProjectData();
+    } else {
+      console.warn("reloadProjectData function not available. Keyword list may not update automatically.");
     }
   };
 
