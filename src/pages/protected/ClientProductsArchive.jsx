@@ -14,17 +14,57 @@ const yearOptions = [2025, 2026, 2027, 2028, 2029];
 const monthYearOptions = [];
 yearOptions.forEach(y => monthOptions.forEach(m => monthYearOptions.push(`${m} ${y}`)));
 
+
+const formatDateToMonthYear = (dateString) => {
+  if (!dateString || typeof dateString !== 'string') {
+    return "";
+  }
+  try {
+    
+    const datePart = dateString.split('T')[0];
+    // Split by '-' assuming YYYY-MM-DD format
+    const parts = datePart.split('-');
+    if (parts.length === 3) {
+        const year = parts[0];
+        const monthIndex = parseInt(parts[1], 10) - 1; // Month is 1-based
+
+        // Use the existing monthOptions array (assuming it's in scope)
+        if (monthIndex >= 0 && monthIndex < monthOptions.length) {
+            const monthName = monthOptions[monthIndex];
+            return `${monthName} ${year}`;
+        }
+    }
+    
+    const existingFormatParts = dateString.split(' ');
+     if (existingFormatParts.length === 2 && monthOptions.includes(existingFormatParts[0].toUpperCase())) {
+         return dateString; // Assume already correct format
+     }
+
+    console.warn("Could not format date string:", dateString);
+    return dateString; // Return original if format is unexpected
+  } catch (error) {
+    console.error("Error formatting date:", dateString, error);
+    return dateString; // Return original on error
+  }
+};
+
+
 const columns = [
   { field: 'name', headerName: 'Cliente', flex: 1, minWidth: 180 },
   {
     field: 'seo',
     headerName: 'SEO',
+    type: 'boolean', // Explicitly define type
     flex: 1,
     minWidth: 120,
     editable: true,
+    align: 'left', // Add left alignment for cell content
+    headerAlign: 'left', // Add left alignment for header
+    renderCell: (params) => params.value === true ? 'SI' : 'NO', // Use renderCell for display
     renderEditCell: (params) => (
       <Select
-        value={params.value || 'NO'}
+        // Ensure value is always boolean for the Select
+        value={params.value === true ? true : false}
         size="small"
         onChange={e => params.api.setEditCellValue({ id: params.id, field: 'seo', value: e.target.value }, e)}
         sx={{ minWidth: 80 }}
@@ -39,12 +79,17 @@ const columns = [
   {
     field: 'multilanding',
     headerName: 'MULTILANDING',
+    type: 'boolean', // Explicitly define type
     flex: 1,
     minWidth: 120,
     editable: true,
+    align: 'left', // Add left alignment for cell content
+    headerAlign: 'left', // Add left alignment for header
+    renderCell: (params) => params.value === true ? 'SI' : 'NO', // Use renderCell for display
     renderEditCell: (params) => (
       <Select
-        value={params.value || 'NO'}
+        // Ensure value is always boolean for the Select
+        value={params.value === true ? true : false}
         size="small"
         onChange={e => params.api.setEditCellValue({ id: params.id, field: 'multilanding', value: e.target.value }, e)}
         sx={{ minWidth: 80 }}
@@ -80,9 +125,14 @@ const columns = [
     flex: 1,
     minWidth: 200,
     editable: true,
+    // Add renderCell to ensure correct display format
+    renderCell: (params) => formatDateToMonthYear(params.value),
     renderEditCell: (params) => {
+      // The edit cell logic seems fine, it works with "MESE ANNO"
       let value = params.value || '';
-      let [mese, anno] = value.split(' ');
+      // Ensure the value used for splitting is the formatted one if needed,
+      // but usually params.value should be correct from the state here.
+      let [mese, anno] = formatDateToMonthYear(value).split(' ');
       return (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <Select
@@ -112,7 +162,7 @@ const columns = [
             <MenuItem value=""></MenuItem>
             {yearOptions.map(opt => (
               <MenuItem key={opt} value={String(opt)}>{opt}</MenuItem>
-            ))}
+            ))}\
           </Select>
         </div>
       );
@@ -123,7 +173,14 @@ const columns = [
 
 function exportToCSV(clients) {
   const headers = ["Cliente", "SEO", "MULTILANDING", "NEWS", "INIZIO CONTRATTO"];
-  const rows = clients.map(c => [c.name, c.seo, c.multilanding, c.news, c.inizioContratto]);
+  // Map boolean values to SI/NO for export
+  const rows = clients.map(c => [
+    c.name,
+    c.seo === true ? 'SI' : 'NO',
+    c.multilanding === true ? 'SI' : 'NO',
+    c.news,
+    c.inizioContratto
+  ]);
   let csvContent = headers.join(";") + "\n" + rows.map(r => r.join(";")).join("\n");
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
@@ -139,83 +196,113 @@ const ClientProductsArchive = () => {
   const token = localStorage.getItem("axo_token");
   const [clients, setClients] = useState([]);
 
-  useEffect(() => {
-    const loadClients = async () => {
-      try {
+  // Moved loadClients outside useEffect
+  const loadClients = async () => {
+    try {
+      // 1. Leggi i progetti
+      const DB = "progettiserp";
+      const progettiResponse = await Leggi(
+        SERVERAPI,
+        token,
+        DB,
+        `WHERE AZIENDA = '${AZIENDA}'`
+      );
 
-        const DB = "Seo_ProgettiArticoli";
+      // 2. Leggi tutti i prodotti (SEO/MULTILANDING) associati ai progetti
+      const prodottiResponse = await Leggi(
+        SERVERAPI,
+        token,
+        "ProgettiSerpProdotti",
+        `WHERE AZIENDA = '${AZIENDA}'`
+      );
 
+      // 3. Prepara una mappa per accesso rapido ai prodotti per progetto e articolo
+      const prodottiMap = {};
+      if (prodottiResponse?.Itemset?.ProgettiSerpProdotti) {
+        prodottiResponse.Itemset.ProgettiSerpProdotti.forEach(prod => {
+          if (!prodottiMap[prod.PIDOBJ]) prodottiMap[prod.PIDOBJ] = {};
+          prodottiMap[prod.PIDOBJ][prod.ProgettiSerpProdotti_Articolo] = prod;
+        });
+      }
 
-
-        // Prima controlla se esiste già un record
-        const leggiResponse = await Leggi(
-          SERVERAPI,
-          token,
-          DB,
-          `WHERE AZIENDA = '${AZIENDA}' `
-        );
-
-
-        const data = await leggiResponse
-
-
-        console.log('Leggi response:', data);
-        const clienti = (data?.Itemset?.Seo_ProgettiArticoli || []).map(item => ({
-          id: item.IDOBJ,
-          name: item.ProgettiSerp_Nome || item.nome || `Progetto ${item.IDOBJ}`,
-          seo: item.Seo? "SI":"NO" || "NO",
-          idseo: item.IDSeo,
-          multilanding: item.MULTILANDING? "SI":"NO" || "NO",
-          idmultilanding: item.IDMULTILANDING,
-          news: item.ProgettiSerp_News || "",
-          inizioContratto: item.ProgettiSerp_InizioContratto || "",
-        }));
+      if (progettiResponse?.Itemset?.progettiserp) {
+        const clienti = progettiResponse.Itemset.progettiserp.map(item => {
+          const seoProd = prodottiMap[item.IDOBJ]?.[1];
+          const multilandingProd = prodottiMap[item.IDOBJ]?.[2];
+          return {
+            id: item.IDOBJ,
+            name: item.ProgettiSerp_Nome || item.nome || `Progetto ${item.IDOBJ}`,
+            // Map to boolean true/false
+            seo: seoProd ? (seoProd.ProgettiSerpProdotti_Valore === true || String(seoProd.ProgettiSerpProdotti_Valore).toUpperCase() === "SI" || String(seoProd.ProgettiSerpProdotti_Valore) === "1") : false,
+            idseo: seoProd ? seoProd.IDOBJ : undefined,
+            // Map to boolean true/false
+            multilanding: multilandingProd ? (multilandingProd.ProgettiSerpProdotti_Valore === true || String(multilandingProd.ProgettiSerpProdotti_Valore).toUpperCase() === "SI" || String(multilandingProd.ProgettiSerpProdotti_Valore) === "1") : false,
+            idmultilanding: multilandingProd ? multilandingProd.IDOBJ : undefined,
+            news: item.ProgettiSerp_News || "",
+            // Format the date here before setting state
+            inizioContratto: formatDateToMonthYear(item.ProgettiSerp_InizioContratto || ""),
+          };
+        });
         setClients(clienti);
-      } catch (e) {
-        console.error('Error loading clients:', e);
+      } else {
         setClients([]);
       }
-    };
+    } catch (e) {
+      console.error('Error loading clients:', e);
+      setClients([]);
+    }
+  };
+
+  useEffect(() => {
     loadClients();
-  }, [SERVERAPI, token]);
+  }, [SERVERAPI, token, AZIENDA]); 
 
   const saveClientField = async (projectId, field, value, recordId) => {
+    let newRecordId = null; // Variable to store the new ID if created
     try {
       if (field === "seo" || field === "multilanding") {
         const DB = "ProgettiSerpProdotti";
         const Classe = "ProgettiSerpProdotti";
         const articolo = field === "seo" ? 1 : 2;
 
-        // Prima controlla se esiste già un record
-        const leggiResponse = await Leggi(
-          SERVERAPI,
-          token,
-          DB,
-          `WHERE AZIENDA = '${AZIENDA}' AND PIDOBJ = '${projectId}' AND ProgettiSerpProdotti_Articolo = ${articolo}`
-        );
-        console.log('Leggi response:', leggiResponse);
+        // Leggi per trovare l'IDOBJ se non fornito o se è 0 (per nuovi record)
+        let existingRecordId = recordId;
+        if (!existingRecordId) {
+            const leggiResponse = await Leggi(
+              SERVERAPI,
+              token,
+              DB,
+              `WHERE AZIENDA = '${AZIENDA}' AND PIDOBJ = '${projectId}' AND ProgettiSerpProdotti_Articolo = ${articolo}`
+            );
+            console.log(`Leggi response for ${field} check:`, leggiResponse);
+            if (leggiResponse?.Itemset?.ProgettiSerpProdotti?.[0]?.IDOBJ) {
+                existingRecordId = leggiResponse.Itemset.ProgettiSerpProdotti[0].IDOBJ;
+                console.log(`Found existing record ID for ${field}: ${existingRecordId}`);
+            }
+        }
+
 
         const jsonObj = {
           ProgettiSerpProdotti_Articolo: articolo,
+          // Ensure boolean value is sent correctly if needed by backend, otherwise adjust
           ProgettiSerpProdotti_Valore: value,
           AZIENDA,
-          PIDOBJ: projectId  // Aggiungiamo PIDOBJ al payload
+          PIDOBJ: projectId
         };
 
-        const idobj = recordId || 0;  // Usa 0 per nuovo record, altrimenti usa recordId esistente
+        const idobj = existingRecordId || 0;
 
         console.log(`Saving ${field} - IDOBJ: ${idobj}, Payload:`, jsonObj);
         const scrittoResponse = await Scrivi(SERVERAPI, token, idobj, DB, Classe, jsonObj);
         console.log('Scrivi Response:', scrittoResponse);
 
-        // Ricarica i dati dopo il salvataggio
-        const reloadResponse = await Leggi(
-          SERVERAPI,
-          token,
-          DB,
-          `WHERE AZIENDA = '${AZIENDA}' AND PIDOBJ = '${projectId}' AND ProgettiSerpProdotti_Articolo = ${articolo}`
-        );
-        console.log('Reload response:', reloadResponse);
+        // If a new record was created, capture the new IDOBJ
+        if (idobj === 0 && scrittoResponse?.Itemset?.[Classe]?.[0]?.IDOBJ) {
+            newRecordId = scrittoResponse.Itemset[Classe][0].IDOBJ;
+            console.log(`New record created for ${field}, IDOBJ: ${newRecordId}`);
+            // No state update here, return the ID instead
+        }
+
       } else if (field === "news" || field === "inizioContratto") {
         // Salva su progettiserp
         const DB = "progettiserp";
@@ -225,10 +312,10 @@ const ClientProductsArchive = () => {
           inizioContratto: "ProgettiSerp_InizioContratto"
         };
         const backendField = fieldMap[field];
-        const jsonObj = { 
+        const jsonObj = {
           IDOBJ: projectId,
           [backendField]: value,
-          AZIENDA 
+          AZIENDA
         };
         console.log(`Attempting to save ${field}:`, {
           projectId,
@@ -238,77 +325,70 @@ const ClientProductsArchive = () => {
           jsonObj
         });
 
-        // Prima leggiamo il record esistente
-        const leggiResponse = await Leggi(
-          SERVERAPI,
-          token,
-          DB,
-          `WHERE AZIENDA = '${AZIENDA}' AND IDOBJ = '${projectId}'`
-        );
-        console.log('Leggi response for project:', leggiResponse);
-
-        // Salviamo il record
+     
         const scrittoResponse = await Scrivi(SERVERAPI, token, projectId, DB, Classe, jsonObj);
         console.log('Scrivi Response:', scrittoResponse);
 
-        // Verifichiamo il salvataggio
-        const verifyResponse = await Leggi(
-          SERVERAPI,
-          token,
-          DB,
-          `WHERE AZIENDA = '${AZIENDA}' AND IDOBJ = '${projectId}'`
-        );
-        console.log('Verify after save:', verifyResponse);
+       
       }
     } catch (e) {
       console.error(`Error saving field ${field}:`, e);
-      throw e; // Rilanciamo l'errore per gestirlo nel processRowUpdate
+      throw e;
     }
+    // Return the new ID if one was created
+    return newRecordId;
   };
 
   const processRowUpdate = async (newRow, oldRow) => {
-    try {
-      console.log('Processing row update:', {
-        oldRow,
-        newRow,
-        changes: {
-          seoChanged: newRow.seo !== oldRow.seo,
-          multilandingChanged: newRow.multilanding !== oldRow.multilanding,
-          newsChanged: newRow.news !== oldRow.news,
-          inizioContrattoChanged: newRow.inizioContratto !== oldRow.inizioContratto
-        }
-      });
+    let updatedRowData = { ...newRow }; // Start with the grid's proposed new row
 
-      const updatedClients = clients.map(c => c.id === newRow.id ? { ...c, ...newRow } : c);
-      setClients(updatedClients);
-      
+    try {
+      console.log('Processing row update:', { oldRow, newRow });
+
+      // Check which fields changed and save them, collecting potential new IDs
+      const promises = [];
+      const idUpdates = {}; // Object to store potential new IDs { idseo: ..., idmultilanding: ... }
+
       if (newRow.seo !== oldRow.seo) {
-        await saveClientField(newRow.id, "seo", newRow.seo, newRow.idseo);
+        promises.push(
+          saveClientField(newRow.id, "seo", newRow.seo, newRow.idseo)
+            .then(newId => { if (newId) idUpdates.idseo = newId; }) // Store new ID if returned
+        );
       }
       if (newRow.multilanding !== oldRow.multilanding) {
-        await saveClientField(newRow.id, "multilanding", newRow.multilanding, newRow.idmultilanding);
+        promises.push(
+          saveClientField(newRow.id, "multilanding", newRow.multilanding, newRow.idmultilanding)
+            .then(newId => { if (newId) idUpdates.idmultilanding = newId; }) // Store new ID if returned
+        );
       }
       if (newRow.news !== oldRow.news) {
-        console.log('Saving news change:', {
-          id: newRow.id,
-          oldNews: oldRow.news,
-          newNews: newRow.news
-        });
-        await saveClientField(newRow.id, "news", newRow.news);
+        promises.push(saveClientField(newRow.id, "news", newRow.news)); // No ID expected back
       }
       if (newRow.inizioContratto !== oldRow.inizioContratto) {
-        console.log('Saving inizioContratto change:', {
-          id: newRow.id,
-          oldInizioContratto: oldRow.inizioContratto,
-          newInizioContratto: newRow.inizioContratto
-        });
-        await saveClientField(newRow.id, "inizioContratto", newRow.inizioContratto);
+        promises.push(saveClientField(newRow.id, "inizioContratto", newRow.inizioContratto)); // No ID expected back
       }
-      
-      return newRow;
+
+      // Wait for all save operations to complete
+      await Promise.all(promises);
+
+      // Merge any new IDs into the row data *before* updating state
+      updatedRowData = { ...updatedRowData, ...idUpdates };
+
+      // Update local state *after* successful save and ID merge using functional update
+      setClients(prevClients =>
+        prevClients.map(client =>
+          client.id === updatedRowData.id ? updatedRowData : client // Directly use updatedRowData
+        )
+      );
+
+      // Return the final updated row data (captured from the state update) to the grid
+      console.log('Row update successful, returning:', updatedRowData); // Log the data being returned
+      return updatedRowData; // Return the data that reflects the successful save
+
     } catch (e) {
       console.error('Error in processRowUpdate:', e);
-      throw e;
+   
+      return oldRow; // Return oldRow to revert changes in the DataGrid
     }
   };
 
@@ -327,12 +407,18 @@ const ClientProductsArchive = () => {
           <DataGrid
             rows={clients}
             columns={columns}
-            pageSize={20}
-            rowsPerPageOptions={[20]}
+            initialState={{
+              pagination: {
+                paginationModel: { pageSize: 100 }, // Default page size is 100
+              },
+            }}
+            pageSizeOptions={[100]} // Only allow 100 as page size option
             disableSelectionOnClick
             autoHeight
             processRowUpdate={processRowUpdate}
+            onProcessRowUpdateError={(error) => console.error('DataGrid ProcessRowUpdate Error:', error)}
             sx={{ backgroundColor: '#fff' }}
+            editMode="row"
           />
         </div>
       </div>
