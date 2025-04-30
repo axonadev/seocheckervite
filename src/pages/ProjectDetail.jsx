@@ -1,6 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Box, Typography, Button, Grid } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Grid,
+  Modal,
+  CircularProgress,
+} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import Layout from "../layout/Layout";
@@ -26,7 +33,17 @@ const ProjectDetail = () => {
   const token = localStorage.getItem("axo_token");
   const fileInputRef = useRef(null);
 
-  const { project, keywords, uniqueExtractionDates, projectLogo, loading, error, reloadLogo, setProject, reloadProjectData } = useProjectData(id, token, SERVERAPI, AZIENDA);
+  const {
+    project,
+    keywords,
+    uniqueExtractionDates,
+    projectLogo,
+    loading,
+    error,
+    reloadLogo,
+    setProject,
+    reloadProjectData,
+  } = useProjectData(id, token, SERVERAPI, AZIENDA);
 
   const [searchEngine, setSearchEngine] = useState("");
   const [addKeywordAnchorEl, setAddKeywordAnchorEl] = useState(null);
@@ -35,8 +52,14 @@ const ProjectDetail = () => {
   const [exportPdfDateAnchorEl, setExportPdfDateAnchorEl] = useState(null);
   const [editProjectAnchorEl, setEditProjectAnchorEl] = useState(null);
 
+  // State for progress indicator
+  const [showProgress, setShowProgress] = useState(false);
+  const [progressCount, setProgressCount] = useState(0);
+  const [totalKeywordsToAdd, setTotalKeywordsToAdd] = useState(0);
+
   const [logoImageDataUrl, setLogoImageDataUrl] = useState(null);
-  const [posizionamentoImageDataUrl, setPosizionamentoImageDataUrl] = useState(null);
+  const [posizionamentoImageDataUrl, setPosizionamentoImageDataUrl] =
+    useState(null);
 
   useEffect(() => {
     if (project?.ProgettiSerp_GoogleRegione) {
@@ -141,11 +164,10 @@ const ProjectDetail = () => {
   const handleCloseEditProject = () => setEditProjectAnchorEl(null);
 
   const handleAddKeyword = async () => {
-    // Split input by newline, trim whitespace, and filter out empty lines
     const keywordsToAdd = newKeywordInput
-      .split('\n')
-      .map(kw => kw.trim())
-      .filter(kw => kw !== "");
+      .split("\n")
+      .map((kw) => kw.trim())
+      .filter((kw) => kw !== "");
 
     if (keywordsToAdd.length === 0) {
       alert("Inserisci almeno una keyword valida.");
@@ -162,72 +184,81 @@ const ProjectDetail = () => {
     let errorCount = 0;
     const errors = [];
 
-    // Process each keyword individually
-    for (const keywordToAdd of keywordsToAdd) {
-      const keywordData = {
-        progettiserpkeywords_parole: keywordToAdd,
-        KeywordSerp_ProgettiSerp_id: project.IDOBJ,
-        KeywordSerp_Azienda_id: AZIENDA,
-        pidobj: project.IDOBJ,
-      };
+    // Setup progress
+    setTotalKeywordsToAdd(keywordsToAdd.length);
+    setProgressCount(0);
+    setShowProgress(true);
 
-      const requestBody = {
-        Token: token,
-        IDOBJ: 0,
-        DB: "progettiserpkeywords",
-        Modulo: "progettiserpkeywords",
-        Classe: "progettiserpkeywordssel",
-        Item: ` {progettiserpkeywords:[${JSON.stringify(keywordData)}]} `
-      };
+    try {
+      // Process each keyword individually
+      for (const [index, keywordToAdd] of keywordsToAdd.entries()) {
+        const keywordData = {
+          progettiserpkeywords_parole: keywordToAdd,
+          KeywordSerp_ProgettiSerp_id: project.IDOBJ,
+          KeywordSerp_Azienda_id: AZIENDA,
+          pidobj: project.IDOBJ,
+        };
 
-      try {
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        });
+        const requestBody = {
+          Token: token,
+          IDOBJ: 0,
+          DB: "progettiserpkeywords",
+          Modulo: "progettiserpkeywords",
+          Classe: "progettiserpkeywordssel",
+          Item: ` {progettiserpkeywords:[${JSON.stringify(keywordData)}]} `,
+        };
 
-        if (!response.ok) {
-          let errorMsg = `Errore API (${response.status}) per '${keywordToAdd}': ${response.statusText}`;
-          try {
-            const errorData = await response.json();
-            errorMsg = errorData.message || errorData.Errore || errorMsg;
-          } catch (parseError) { }
-          throw new Error(errorMsg);
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestBody),
+          });
+
+          if (!response.ok) {
+            let errorMsg = `Errore API (${response.status}) per '${keywordToAdd}': ${response.statusText}`;
+            try {
+              const errorData = await response.json();
+              errorMsg = errorData.message || errorData.Errore || errorMsg;
+            } catch (parseError) {}
+            throw new Error(errorMsg);
+          }
+
+          const data = await response.json();
+
+          if (data && (data.Errore || data.stato === "KO")) {
+            throw new Error(
+              data.Errore || `Errore API durante l'aggiunta di '${keywordToAdd}'`
+            );
+          }
+          successCount++;
+          console.log(`Keyword '${keywordToAdd}' added successfully`);
+        } catch (err) {
+          errorCount++;
+          errors.push(err.message);
+          console.error(`Error adding keyword '${keywordToAdd}':`, err);
         }
-
-        const data = await response.json();
-
-        if (data && (data.Errore || data.stato === 'KO')) {
-          throw new Error(data.Errore || `Errore API durante l'aggiunta di '${keywordToAdd}'`);
-        }
-        successCount++;
-        console.log(`Keyword '${keywordToAdd}' added successfully`);
-
-      } catch (err) {
-        errorCount++;
-        errors.push(err.message);
-        console.error(`Error adding keyword '${keywordToAdd}':`, err);
+        // Update progress after each attempt
+        setProgressCount(index + 1);
       }
+    } finally {
+      // Hide progress indicator when done
+      setShowProgress(false);
     }
 
     // After processing all keywords
-    if (errorCount > 0) {
-      alert(`Aggiunte ${successCount} keywords con successo.\nErrore durante l'aggiunta di ${errorCount} keywords:\n- ${errors.join('\n- ')}`);
-    } else {
-      console.log(`Successfully added ${successCount} keywords.`);
-      // Optionally show a success message
-      // alert(`Aggiunte ${successCount} keywords con successo.`);
-    }
+    
 
     // Close popover and refresh data regardless of partial errors
     handleCloseAddKeyword();
     if (reloadProjectData) {
       reloadProjectData();
     } else {
-      console.warn("reloadProjectData function not available. Keyword list may not update automatically.");
+      console.warn(
+        "reloadProjectData function not available. Keyword list may not update automatically."
+      );
     }
   };
 
@@ -438,6 +469,37 @@ const ProjectDetail = () => {
           onExportPdfWithDate={triggerPdfExport}
         />
       </Box>
+
+      {/* Progress Modal */}
+      <Modal
+        open={showProgress}
+        aria-labelledby="keyword-progress-title"
+        aria-describedby="keyword-progress-description"
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            border: "2px solid #000",
+            boxShadow: 24,
+            p: 4,
+            textAlign: "center",
+            borderRadius: 2,
+          }}
+        >
+          <Typography id="keyword-progress-title" variant="h6" component="h2">
+            Aggiunta Keywords in corso...
+          </Typography>
+          <CircularProgress sx={{ my: 2 }} />
+          <Typography id="keyword-progress-description" sx={{ mt: 2 }}>
+            {progressCount} / {totalKeywordsToAdd}
+          </Typography>
+        </Box>
+      </Modal>
     </Layout>
   );
 };
