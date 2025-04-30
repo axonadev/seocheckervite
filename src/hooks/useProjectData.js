@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 const useProjectData = (projectId, token, SERVERAPI, AZIENDA) => {
   const [project, setProject] = useState(null);
@@ -26,7 +26,9 @@ const useProjectData = (projectId, token, SERVERAPI, AZIENDA) => {
       const projectUrl = `${SERVERAPI}/api/axo_sel/${token}/progettiserp/progettiserpsel/leggi/${projectId}`;
       const projectResponse = await fetch(projectUrl);
       if (!projectResponse.ok) {
-        throw new Error(`HTTP error fetching project! status: ${projectResponse.status}`);
+        throw new Error(
+          `HTTP error fetching project! status: ${projectResponse.status}`
+        );
       }
       const projectData = await projectResponse.json();
       if (projectData?.Itemset?.v_progettiserp?.length > 0) {
@@ -39,15 +41,17 @@ const useProjectData = (projectId, token, SERVERAPI, AZIENDA) => {
       const keywordsUrl = `${SERVERAPI}/api/axo_sel/${token}/progettiserp/progettiserpsel/leggiKeyWords/${projectId}`;
       const keywordsResponse = await fetch(keywordsUrl);
       if (!keywordsResponse.ok) {
-        console.error(`HTTP error fetching keywords! status: ${keywordsResponse.status}`);
+        console.error(
+          `HTTP error fetching keywords! status: ${keywordsResponse.status}`
+        );
         setKeywords([]);
         setUniqueExtractionDates([]);
         // Don't throw error here, project might exist without keywords yet
       } else {
         const keywordsData = await keywordsResponse.json();
         console.log("Raw keywords response:", keywordsData);
-        
-        const keywordsWithId = (keywordsData?.Itemset?.v_keywords || []).map(
+
+        /*      const keywordsWithId = (keywordsData?.Itemset?.v_keywords || []).map(
           (kw, index) => ({
             id: kw.idobj || kw.IDOBJ || `temp-${index}-${Date.now()}`, // prioritize lowercase idobj
             idobj: kw.idobj, // store original lowercase idobj
@@ -56,6 +60,25 @@ const useProjectData = (projectId, token, SERVERAPI, AZIENDA) => {
             KeywordSerp_Posizione: kw.posizione || kw.KeywordSerp_Posizione || kw.Posizione || null,
             KeywordSerp_Variazione: kw.variazione || kw.KeywordSerp_Variazione || kw.Variazione || null,
             KeywordSerp_URL: kw.urlkey || kw.KeywordSerp_URL || kw.url || kw.URL || "",
+          })
+
+          
+        ); */
+
+        const keywordsWithId = (keywordsData?.Itemset?.v_keywords || []).map(
+          (kw, index) => ({
+            id: kw.IDOBJ || `temp-${index}-${Date.now()}`,
+            KeywordSerp_Keyword:
+              kw.KeywordSerp_Keyword || kw.keyword || kw.Keyword || "",
+            KeywordSerp_Posizione:
+              kw.KeywordSerp_Posizione || kw.posizione || kw.Posizione || null,
+            KeywordSerp_Variazione:
+              kw.KeywordSerp_Variazione ||
+              kw.variazione ||
+              kw.Variazione ||
+              null,
+            KeywordSerp_URL:
+              kw.urlkey || kw.KeywordSerp_URL || kw.url || kw.URL || "",
           })
         );
         setKeywords(keywordsWithId);
@@ -78,25 +101,25 @@ const useProjectData = (projectId, token, SERVERAPI, AZIENDA) => {
   }, [projectId, token, SERVERAPI]);
 
   const fetchLogo = useCallback(() => {
-      if (!projectId || !AZIENDA) return;
-      // Fetch logo - uses progImg in dependency array indirectly via reloadLogo
-      fetch(`/personal/${AZIENDA}/doc/logo/logo_${projectId}.png?v=${progImg}`) // Use progImg for cache busting
-        .then(async (res) => {
-          if (res.ok) {
-            const blob = await res.blob();
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              setProjectLogo(reader.result);
-            };
-            reader.readAsDataURL(blob);
-          } else {
-            setProjectLogo(null); // Reset if logo not found or error
-          }
-        })
-        .catch((err) => {
-          console.error("Error fetching project logo:", err);
-          setProjectLogo(null);
-        });
+    if (!projectId || !AZIENDA) return;
+    // Fetch logo - uses progImg in dependency array indirectly via reloadLogo
+    fetch(`/personal/${AZIENDA}/doc/logo/logo_${projectId}.png?v=${progImg}`) // Use progImg for cache busting
+      .then(async (res) => {
+        if (res.ok) {
+          const blob = await res.blob();
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setProjectLogo(reader.result);
+          };
+          reader.readAsDataURL(blob);
+        } else {
+          setProjectLogo(null); // Reset if logo not found or error
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching project logo:", err);
+        setProjectLogo(null);
+      });
   }, [projectId, AZIENDA, progImg]); // Add progImg dependency
 
   useEffect(() => {
@@ -104,7 +127,7 @@ const useProjectData = (projectId, token, SERVERAPI, AZIENDA) => {
   }, [fetchData]); // Run fetchData when dependencies change
 
   useEffect(() => {
-      fetchLogo();
+    fetchLogo();
   }, [fetchLogo]); // Run fetchLogo when its dependencies change (including progImg)
 
   // Function to trigger logo refetch
@@ -112,7 +135,17 @@ const useProjectData = (projectId, token, SERVERAPI, AZIENDA) => {
     setProgImg((prev) => prev + 1);
   };
 
-  return { project, keywords, uniqueExtractionDates, projectLogo, loading, error, reloadLogo, setProject, reloadProjectData: fetchData }; // Expose fetchData as reloadProjectData
+  return {
+    project,
+    keywords,
+    uniqueExtractionDates,
+    projectLogo,
+    loading,
+    error,
+    reloadLogo,
+    setProject,
+    reloadProjectData: fetchData,
+  }; // Expose fetchData as reloadProjectData
 };
 
 export default useProjectData;
