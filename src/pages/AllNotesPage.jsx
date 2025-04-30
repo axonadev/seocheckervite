@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Paper } from "@mui/material";
+import { Box, Typography, Paper, Button } from "@mui/material";
+import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import useEnv from "../hooks/useEnv";
 import { Leggi } from "../utility/callFetch";
@@ -69,6 +70,25 @@ const AllNotesPage = ({ token }) => {
    
   ];
 
+  // Funzione export CSV simile a ClientProductsArchive
+  function exportToCSV(notes) {
+    const headers = ["Data", "Progetto", "Utente", "Nota"];
+    const rows = notes.map(n => [
+      n.S_INSTS ? new Date(n.S_INSTS).toLocaleString('it-IT') : '',
+      n.ProgettiSerp_Nome || '',
+      n.ProgettiSerpNote_Nome || '',
+      (n.ProgettiSerpNote_Nota || '').replace(/\r?\n|\r/g, ' ')
+    ]);
+    let csvContent = headers.join(";") + "\n" + rows.map(r => r.join(";")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", "all_notes.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
     <>
 
@@ -77,7 +97,14 @@ const AllNotesPage = ({ token }) => {
         
     
       <Box>
-       
+        <Button
+          variant="contained"
+          startIcon={<DownloadOutlinedIcon />}
+          onClick={() => exportToCSV(notes)}
+          sx={{ marginBottom: 2 }}
+        >
+          Esporta in Excel (CSV)
+        </Button>
         <Paper style={{ height: '90vh' , width: '100%' }}>
           <DataGrid
             rows={notes.map((note, idx) => ({ id: idx, ...note }))}

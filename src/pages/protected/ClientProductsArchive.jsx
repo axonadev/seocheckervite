@@ -394,7 +394,7 @@ const ClientProductsArchive = () => {
 
   return (
     <Layout label="Client product" showSearchBar={false}>
-      <div style={{ padding: 24 }}>
+      <div>
         <Button
           variant="contained"
           startIcon={<DownloadOutlinedIcon />}

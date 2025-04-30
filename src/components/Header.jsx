@@ -1,6 +1,5 @@
 import React from "react";
 import { AppBar, Toolbar, Typography, Box } from "@mui/material";
-import LanguageIcon from "@mui/icons-material/Language";
 import Tooltip from "@mui/material/Tooltip";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import useKeywordCount from "../hooks/useKeywordCount";
@@ -22,7 +21,8 @@ const Header = ({ label = "home" }) => {
       >
         <Toolbar>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <LanguageIcon sx={{ fontSize: 24 }} />
+            {/* Replace LanguageIcon with favicon image */}
+            <img src="/favicon.svg" alt="Favicon" style={{ width: 30, height: 30 , marginLeft: '-5px'}} />
             <Typography
               variant="h6"
               component="div"

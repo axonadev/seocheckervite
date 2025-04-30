@@ -12,7 +12,7 @@ import useDevice from "../hooks/useDevice";
 import Header from "../components/Header";
 
 
-const Layout = ({ children, onProjectAdded, showSearchBar = true, onSearch = () => {} , label = "home"}) => {
+const Layout = ({ children, onProjectAdded, showSearchBar = true, onSearch = () => {} , label = "Home"}) => {
   const naviga = useNavigate();
   const { dimensions } = useDevice(); 
   const sessionToken = localStorage.getItem("axo_token");

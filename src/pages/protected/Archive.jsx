@@ -136,7 +136,7 @@ const Archive  = () => {
   if (loading) return null;
 
   return (
-    <Layout label="archive">
+    <Layout label="Archive">
 
         
         <DataGrid
