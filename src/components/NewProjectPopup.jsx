@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Paper,
   Box,
@@ -8,20 +8,20 @@ import {
   Popover,
   Snackbar,
   Alert,
-  CircularProgress
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import useEnv from '../hooks/useEnv';
-import { useNavigate } from 'react-router-dom';
+  CircularProgress,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import useEnv from "../hooks/useEnv";
+import { useNavigate } from "react-router-dom";
 
 const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
-  const [projectName, setProjectName] = useState('');
-  const [projectUrl, setProjectUrl] = useState('https://');
+  const [projectName, setProjectName] = useState("");
+  const [projectUrl, setProjectUrl] = useState("https://");
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
-    message: '',
-    severity: 'success'
+    message: "",
+    severity: "success",
   });
 
   const navigate = useNavigate();
@@ -38,8 +38,8 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const getData = await res.json();
@@ -59,12 +59,20 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
 
   const handleSubmit = async () => {
     if (!projectName.trim()) {
-      setSnackbar({ open: true, message: 'Inserisci il nome del progetto', severity: 'error' });
+      setSnackbar({
+        open: true,
+        message: "Inserisci il nome del progetto",
+        severity: "error",
+      });
       return;
     }
 
-    if (!projectUrl.trim() || projectUrl === 'https://') {
-      setSnackbar({ open: true, message: 'Inserisci un URL valido', severity: 'error' });
+    if (!projectUrl.trim() || projectUrl === "https://") {
+      setSnackbar({
+        open: true,
+        message: "Inserisci un URL valido",
+        severity: "error",
+      });
       return;
     }
 
@@ -72,9 +80,12 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
 
     const newProject = {
       ProgettiSerp_Nome: projectName,
-      ProgettiSerp_DNS: projectUrl,
-      ProgettiSerp_Stato: 1,
-      dataInserimento: new Date().toISOString()
+      ProgettiSerp_DNS: projectUrl
+        .replaceAll("https://", "")
+        .replaceAll("http://", ""),
+      ProgettiSerp_Stato: 0,
+      ProgettiSerp_GoogleRegione: "Italia",
+      dataInserimento: new Date().toISOString(),
     };
 
     const apiUrl = `${SERVERAPI}/api/axo_sel`;
@@ -85,7 +96,7 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
       DB: "progettiserp",
       Modulo: "progettiserp",
       Classe: "progettiserpsel",
-      Item: JSON.stringify({ progettiserp: [newProject] })
+      Item: JSON.stringify({ progettiserp: [newProject] }),
     };
 
     const controller = new AbortController();
@@ -98,7 +109,7 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -114,18 +125,20 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
 
       // Fallback se l'ID non è arrivato dalla POST
       if (!projectId) {
-        console.warn("ID non presente nella risposta POST, uso fallback GET...");
+        console.warn(
+          "ID non presente nella risposta POST, uso fallback GET..."
+        );
         projectId = await fallbackGetLastProjectId();
       }
 
       setSnackbar({
         open: true,
-        message: 'Progetto creato con successo!',
-        severity: 'success'
+        message: "Progetto creato con successo!",
+        severity: "success",
       });
 
-      setProjectName('');
-      setProjectUrl('https://');
+      setProjectName("");
+      setProjectUrl("https://");
       onClose();
       if (onProjectAdded) onProjectAdded();
 
@@ -134,15 +147,14 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
         setTimeout(() => navigate(`/projects/${projectId}`), 300);
       } else {
         console.error("Nessun ID progetto trovato, reindirizzo alla home");
-        navigate('/');
+        navigate("/");
       }
-
     } catch (error) {
-      console.error('Errore creazione progetto:', error);
+      console.error("Errore creazione progetto:", error);
       setSnackbar({
         open: true,
-        message: `Errore: ${error.message || 'Errore durante la creazione del progetto'}`,
-        severity: 'error'
+        message: `Errore: ${error.message || "Errore durante la creazione del progetto"}`,
+        severity: "error",
       });
     } finally {
       setLoading(false);
@@ -150,7 +162,7 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
   };
 
   const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   return (
@@ -159,12 +171,12 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
         open={open}
         anchorEl={anchorEl}
         onClose={onClose}
-        anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'center', horizontal: 'left' }}
+        anchorOrigin={{ vertical: "center", horizontal: "right" }}
+        transformOrigin={{ vertical: "center", horizontal: "left" }}
       >
-        <Paper sx={{ p: 2, width: '300px', bgcolor: '#f5f5f5' }}>
-          <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AddIcon sx={{ color: '#673ab7' }} />
+        <Paper sx={{ p: 2, width: "300px", bgcolor: "#f5f5f5" }}>
+          <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+            <AddIcon sx={{ color: "#673ab7" }} />
             <Typography variant="h6">Nuovo Progetto</Typography>
           </Box>
 
@@ -175,7 +187,7 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
             disabled={loading}
-            sx={{ mb: 2, bgcolor: '#fff' }}
+            sx={{ mb: 2, bgcolor: "#fff" }}
           />
 
           <TextField
@@ -185,7 +197,7 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
             value={projectUrl}
             onChange={(e) => setProjectUrl(e.target.value)}
             disabled={loading}
-            sx={{ mb: 2, bgcolor: '#fff' }}
+            sx={{ mb: 2, bgcolor: "#fff" }}
           />
 
           <Button
@@ -193,10 +205,12 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
             variant="contained"
             onClick={handleSubmit}
             disabled={loading}
-            startIcon={loading && <CircularProgress size={20} color="inherit" />}
-            sx={{ bgcolor: '#673ab7' }}
+            startIcon={
+              loading && <CircularProgress size={20} color="inherit" />
+            }
+            sx={{ bgcolor: "#673ab7" }}
           >
-            {loading ? 'Creazione in corso...' : 'Aggiungi Progetto'}
+            {loading ? "Creazione in corso..." : "Aggiungi Progetto"}
           </Button>
         </Paper>
       </Popover>
@@ -205,9 +219,13 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

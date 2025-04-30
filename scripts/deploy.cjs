@@ -42,8 +42,10 @@ async function clearFolder(folderPath) {
   try {
     const publicPath = path.resolve("public");
     const distPath = path.resolve("dist");
+    const scriptPath = path.resolve("scripts");
     const networkPath = `\\\\192.168.50.51\\siti\\${site}.axonasrl.com`;
     const runCopyPath = `\\\\192.168.50.51\\siti\\runcopy`;
+    const runCopyScript = `\\\\192.168.50.51\\siti\\scriptnodejs`;
 
     // Pulisci la cartella di destinazione
     console.log(`Pulizia della cartella di destinazione: ${networkPath}`);
@@ -81,6 +83,18 @@ async function clearFolder(folderPath) {
     execSync(`xcopy "${runCopyPath}\\*" "${networkPath}" /h /e /y /i`, {
       stdio: "inherit",
     });
+
+    // Esegui lo script di deploy
+    execSync(
+      `xcopy "${scriptPath}\\*" "${runCopyScript}\\scripts" /h /e /y /i`,
+      {
+        stdio: "inherit",
+      }
+    );
+
+    /*     execSync(`xcopy ".\\package.json" "${runCopyScript}" /h /e /y /i`, {
+      stdio: "inherit",
+    }); */
 
     console.log(`Deploy completato per ${site}`);
   } catch (err) {
