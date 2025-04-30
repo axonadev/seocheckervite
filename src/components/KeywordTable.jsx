@@ -31,6 +31,71 @@ const KeywordTable = ({
       headerName: "Keywords",
       flex: 1,
       minWidth: 200,
+      renderCell: (params) => {
+        const keyword = params.value;
+        const [hovered, setHovered] = React.useState(false);
+        const [ctrlPressed, setCtrlPressed] = React.useState(false);
+        React.useEffect(() => {
+          const handleKeyDown = (e) => {
+            if (e.key === "Control") setCtrlPressed(true);
+          };
+          const handleKeyUp = (e) => {
+            if (e.key === "Control") setCtrlPressed(false);
+          };
+          window.addEventListener("keydown", handleKeyDown);
+          window.addEventListener("keyup", handleKeyUp);
+          return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("keyup", handleKeyUp);
+          };
+        }, []);
+        const isClickable = hovered && ctrlPressed;
+
+        const googleGeo =
+          searchEngine == "Internazionale"
+            ? "com"
+            : searchEngine == "Germania"
+              ? "de"
+              : searchEngine == "Spagna"
+                ? "es"
+                : searchEngine == "Regno Unito"
+                  ? "co.uk"
+                  : searchEngine == "Francia"
+                    ? "fr"
+                    : searchEngine == "Portogallo"
+                      ? "pt"
+                      : "it";
+
+        return (
+          <span
+            style={{
+              color: isClickable ? "#1976d2" : "#333",
+              textDecoration: isClickable ? "underline" : "none",
+              cursor: isClickable ? "pointer" : "default",
+              transition: "color 0.2s",
+            }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            title={
+              isClickable
+                ? "Apri Google Search (Ctrl+Click)"
+                : "Tieni premuto Ctrl e passa sopra per aprire"
+            }
+          >
+            <a
+              style={{ color: "inherit", textDecoration: "none" }}
+              href={
+                "https://www.google." +
+                googleGeo +
+                "/search?q=" +
+                keyword.replaceAll(" ", "+")
+              }
+            >
+              {keyword}
+            </a>
+          </span>
+        );
+      },
     },
     {
       field: "KeywordSerp_Posizione",
@@ -46,7 +111,8 @@ const KeywordTable = ({
       align: "center",
       headerAlign: "center",
       valueGetter: (value, row) => {
-        const val = typeof value === 'object' && value !== null ? value.value : value;
+        const val =
+          typeof value === "object" && value !== null ? value.value : value;
         if (val === -999 || val === "-999" || val == null) {
           return "-";
         }
@@ -81,21 +147,29 @@ const KeywordTable = ({
         return (
           <span
             style={{
-              color: isClickable ? '#1976d2' : '#333',
-              textDecoration: isClickable ? 'underline' : 'none',
-              cursor: isClickable ? 'pointer' : 'default',
-              transition: 'color 0.2s',
-              wordBreak: 'break-all',
+              color: isClickable ? "#1976d2" : "#333",
+              textDecoration: isClickable ? "underline" : "none",
+              cursor: isClickable ? "pointer" : "default",
+              transition: "color 0.2s",
+              wordBreak: "break-all",
             }}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
-            onClick={e => {
+            onClick={(e) => {
               if (isClickable) {
-                window.open(url.startsWith('http') ? url : `https://${url}`, '_blank', 'noopener');
+                window.open(
+                  url.startsWith("http") ? url : `https://${url}`,
+                  "_blank",
+                  "noopener"
+                );
                 e.stopPropagation();
               }
             }}
-            title={isClickable ? 'Apri URL (Ctrl+Click)' : 'Tieni premuto Ctrl e passa sopra per aprire'}
+            title={
+              isClickable
+                ? "Apri URL (Ctrl+Click)"
+                : "Tieni premuto Ctrl e passa sopra per aprire"
+            }
           >
             {url}
           </span>
@@ -126,10 +200,14 @@ const KeywordTable = ({
               onChange={onSearchEngineChange}
             >
               <MenuItem value="Italia">google.it - Italia</MenuItem>
-              <MenuItem value="Internazionale">google.com - Internazionale</MenuItem>
+              <MenuItem value="Internazionale">
+                google.com - Internazionale
+              </MenuItem>
               <MenuItem value="Germania">google.de - Germania</MenuItem>
               <MenuItem value="Spagna">google.es - Spagna</MenuItem>
-              <MenuItem value="Regno Unito">google.co.uk - Regno Unito</MenuItem>
+              <MenuItem value="Regno Unito">
+                google.co.uk - Regno Unito
+              </MenuItem>
               <MenuItem value="Francia">google.fr - Francia</MenuItem>
               <MenuItem value="Portogallo">google.pt - Portogallo</MenuItem>
             </Select>
