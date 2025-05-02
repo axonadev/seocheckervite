@@ -9,10 +9,9 @@ import {
   FormControl,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-import SaveIcon from "@mui/icons-material/Save";
 import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
 import KeyIcon from "@mui/icons-material/Key";
+import { Difference, PictureAsPdf } from "@mui/icons-material";
 
 const KeywordTable = ({
   keywords,
@@ -217,14 +216,14 @@ const KeywordTable = ({
             onClick={onOpenExportDate}
             aria-describedby={exportDatePopoverId}
           >
-            <SaveIcon />
+            <Difference />
           </IconButton>
           <IconButton
             size="small"
             onClick={onOpenExportPdfDate}
             aria-describedby={exportPdfDatePopoverId}
           >
-            <EditIcon />
+            <PictureAsPdf />
           </IconButton>
           <IconButton
             size="small"
