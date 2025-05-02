@@ -58,11 +58,7 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
   const domainToDisplay =
     project.ProgettiSerp_DNS || project.domain || "No domain";
   const keywordCount = project.totaleKeyword || project.keywords || 0;
-  const lastReportDate =
-    project.dataEstrazione ||
-    project.ProgettiSerp_UltimoReport ||
-    project.dataKeyword ||
-    project.dataInserimento;
+  const lastReportDate = project.dataKeyword || null;
 
   const handleArchiveProject = async (event) => {
     event.stopPropagation();

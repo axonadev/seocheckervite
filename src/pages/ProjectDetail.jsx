@@ -76,14 +76,18 @@ const ProjectDetail = () => {
         const reader = new FileReader();
         reader.onloadend = () => setLogoImageDataUrl(reader.result);
         reader.readAsDataURL(blob);
-      }).catch(err => console.error("Error fetching PDF logo asset:", err));
+      })
+      .catch((err) => console.error("Error fetching PDF logo asset:", err));
     fetch("/posizionamento.png")
       .then((res) => res.blob())
       .then((blob) => {
         const reader = new FileReader();
         reader.onloadend = () => setPosizionamentoImageDataUrl(reader.result);
         reader.readAsDataURL(blob);
-      }).catch(err => console.error("Error fetching PDF positioning asset:", err));
+      })
+      .catch((err) =>
+        console.error("Error fetching PDF positioning asset:", err)
+      );
   }, []);
 
   const handleBackClick = () => {
@@ -103,16 +107,28 @@ const ProjectDetail = () => {
         };
         const apiUrl = `${SERVERAPI}/api/axo_sel`;
 
-        const response = await Scrivi(apiUrl, token, project.IDOBJ, "progettiserp", "progettiserpsel", updatedProjectData);
+        const response = await Scrivi(
+          apiUrl,
+          token,
+          project.IDOBJ,
+          "progettiserp",
+          "progettiserpsel",
+          updatedProjectData
+        );
 
-        if (response && (response.Errore || response.stato === 'KO')) {
-          throw new Error(response.Errore || 'Errore durante l\'aggiornamento della regione Google');
+        if (response && (response.Errore || response.stato === "KO")) {
+          throw new Error(
+            response.Errore ||
+              "Errore durante l'aggiornamento della regione Google"
+          );
         }
 
         console.log("Google Region updated successfully");
       } catch (updateError) {
         console.error("Error updating Google Region:", updateError);
-        alert(`Errore durante l'aggiornamento della regione: ${updateError.message}`);
+        alert(
+          `Errore durante l'aggiornamento della regione: ${updateError.message}`
+        );
         setSearchEngine(project?.ProgettiSerp_GoogleRegione || "Italia");
       }
     } else {
@@ -142,11 +158,19 @@ const ProjectDetail = () => {
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
-          await uploadProjectLogo(id, token, SERVERAPI, e.target.result, fileExtension);
+          await uploadProjectLogo(
+            id,
+            token,
+            SERVERAPI,
+            e.target.result,
+            fileExtension
+          );
           reloadLogo();
         } catch (uploadError) {
           console.error("Logo upload failed:", uploadError);
-          alert(`Errore durante il caricamento del logo: ${uploadError.message}`);
+          alert(
+            `Errore durante il caricamento del logo: ${uploadError.message}`
+          );
         }
       };
       reader.readAsDataURL(file);
@@ -154,13 +178,20 @@ const ProjectDetail = () => {
     }
   };
 
-  const handleOpenAddKeyword = (event) => setAddKeywordAnchorEl(event.currentTarget);
-  const handleCloseAddKeyword = () => { setAddKeywordAnchorEl(null); setNewKeywordInput(""); };
-  const handleOpenExportDate = (event) => setExportDateAnchorEl(event.currentTarget);
+  const handleOpenAddKeyword = (event) =>
+    setAddKeywordAnchorEl(event.currentTarget);
+  const handleCloseAddKeyword = () => {
+    setAddKeywordAnchorEl(null);
+    setNewKeywordInput("");
+  };
+  const handleOpenExportDate = (event) =>
+    setExportDateAnchorEl(event.currentTarget);
   const handleCloseExportDate = () => setExportDateAnchorEl(null);
-  const handleOpenExportPdfDate = (event) => setExportPdfDateAnchorEl(event.currentTarget);
+  const handleOpenExportPdfDate = (event) =>
+    setExportPdfDateAnchorEl(event.currentTarget);
   const handleCloseExportPdfDate = () => setExportPdfDateAnchorEl(null);
-  const handleOpenEditProject = (event) => setEditProjectAnchorEl(event.currentTarget);
+  const handleOpenEditProject = (event) =>
+    setEditProjectAnchorEl(event.currentTarget);
   const handleCloseEditProject = () => setEditProjectAnchorEl(null);
 
   const handleAddKeyword = async () => {
@@ -230,7 +261,8 @@ const ProjectDetail = () => {
 
           if (data && (data.Errore || data.stato === "KO")) {
             throw new Error(
-              data.Errore || `Errore API durante l'aggiunta di '${keywordToAdd}'`
+              data.Errore ||
+                `Errore API durante l'aggiunta di '${keywordToAdd}'`
             );
           }
           successCount++;
@@ -249,7 +281,6 @@ const ProjectDetail = () => {
     }
 
     // After processing all keywords
-    
 
     // Close popover and refresh data regardless of partial errors
     handleCloseAddKeyword();
@@ -270,25 +301,29 @@ const ProjectDetail = () => {
     console.log(`Attempting to delete keyword with ID: ${keywordId}`);
 
     // Check if the ID is a temporary one
-    if (String(keywordId).startsWith('temp-')) {
-      alert("Questa keyword non è ancora salvata nel database. Verrà rimossa alla prossima ricarica della pagina.");
+    if (String(keywordId).startsWith("temp-")) {
+      alert(
+        "Questa keyword non è ancora salvata nel database. Verrà rimossa alla prossima ricarica della pagina."
+      );
       return;
     }
 
     // Find the keyword object to get the correct ID format
-    const keywordToDelete = keywords.find(kw => kw.id === keywordId);
+    const keywordToDelete = keywords.find((kw) => kw.id === keywordId);
     console.log("Keyword to delete:", keywordToDelete);
-    
+
     if (!keywordToDelete) {
       alert("Keyword non trovata nella lista.");
       return;
     }
-    
+
     // Use idobj if available
     const actualId = keywordToDelete.idobj || keywordId;
     console.log("Using ID for deletion:", actualId);
 
-    const confirmation = window.confirm("Sei sicuro di voler eliminare questa keyword?");
+    const confirmation = window.confirm(
+      "Sei sicuro di voler eliminare questa keyword?"
+    );
     if (!confirmation) {
       return;
     }
@@ -300,7 +335,7 @@ const ProjectDetail = () => {
       DB: "progettiserpkeywords",
       Modulo: "Elimina Key",
       Classe: "progettiserpkeywordssel",
-      Item: `[{progettiserpkeywords:[{"PIDOBJ":${project.IDOBJ},"IDOBJ":${actualId * -1}}]}]`
+      Item: `[{progettiserpkeywords:[{"PIDOBJ":${project.IDOBJ},"IDOBJ":${actualId * -1}}]}]`,
     };
 
     try {
@@ -326,12 +361,19 @@ const ProjectDetail = () => {
       const data = await response.json();
 
       // Check response structure for success/failure indication from the API logic
-      if (data && (data.Errore || data.stato === 'KO')) {
+      if (data && (data.Errore || data.stato === "KO")) {
         // Handle specific error messages if available
-        if (data.Errore && data.Errore.includes("DELETE statement conflicted")) {
-           throw new Error("Eliminazione fallita: la keyword potrebbe essere collegata ad altri dati.");
+        if (
+          data.Errore &&
+          data.Errore.includes("DELETE statement conflicted")
+        ) {
+          throw new Error(
+            "Eliminazione fallita: la keyword potrebbe essere collegata ad altri dati."
+          );
         }
-        throw new Error(data.Errore || 'Errore restituito dall\'API durante l\'eliminazione');
+        throw new Error(
+          data.Errore || "Errore restituito dall'API durante l'eliminazione"
+        );
       }
 
       console.log(`Keyword with ID ${actualId} deleted successfully`);
@@ -341,9 +383,10 @@ const ProjectDetail = () => {
       if (reloadProjectData) {
         reloadProjectData();
       } else {
-        console.warn("reloadProjectData function not available. Keyword list may not update automatically.");
+        console.warn(
+          "reloadProjectData function not available. Keyword list may not update automatically."
+        );
       }
-
     } catch (err) {
       console.error(`Error deleting keyword ${actualId}:`, err);
       alert(`Errore durante l'eliminazione della keyword: ${err.message}`);
@@ -356,7 +399,15 @@ const ProjectDetail = () => {
   };
 
   const triggerPdfExport = (dateString) => {
-    generatePdfReport(project, keywords, dateString, logoImageDataUrl, posizionamentoImageDataUrl, true, SERVERAPI);
+    generatePdfReport(
+      project,
+      keywords,
+      dateString,
+      logoImageDataUrl,
+      posizionamentoImageDataUrl,
+      true,
+      SERVERAPI
+    );
     handleCloseExportPdfDate();
   };
 
@@ -369,10 +420,17 @@ const ProjectDetail = () => {
 
   if (error) {
     return (
-      <Layout showSearchBar={false} label="project-detail"> 
+      <Layout showSearchBar={false} label="Project-detail">
         <Box sx={{ p: 3, textAlign: "center" }}>
           <Typography color="error">Error loading project: {error}</Typography>
-          <Button startIcon={<ArrowBackIcon />} onClick={handleBackClick} sx={{ mt: 2 }}> Indietro </Button>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={handleBackClick}
+            sx={{ mt: 2 }}
+          >
+            {" "}
+            Indietro{" "}
+          </Button>
         </Box>
       </Layout>
     );
@@ -380,26 +438,41 @@ const ProjectDetail = () => {
 
   if (!project) {
     return (
-      <Layout showSearchBar={false} label="project-detail">
+      <Layout showSearchBar={false} label="Project-detail">
         <Box sx={{ p: 3, textAlign: "center" }}>
           <Typography>Project not found.</Typography>
-          <Button startIcon={<ArrowBackIcon />} onClick={handleBackClick} sx={{ mt: 2 }}> Indietro </Button>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={handleBackClick}
+            sx={{ mt: 2 }}
+          >
+            {" "}
+            Indietro{" "}
+          </Button>
         </Box>
       </Layout>
     );
   }
 
   const openAddKeyword = Boolean(addKeywordAnchorEl);
-  const addKeywordPopoverId = openAddKeyword ? "add-keyword-popover" : undefined;
+  const addKeywordPopoverId = openAddKeyword
+    ? "add-keyword-popover"
+    : undefined;
   const openExportDate = Boolean(exportDateAnchorEl);
-  const exportDatePopoverId = openExportDate ? "export-date-popover" : undefined;
+  const exportDatePopoverId = openExportDate
+    ? "export-date-popover"
+    : undefined;
   const openExportPdfDate = Boolean(exportPdfDateAnchorEl);
-  const exportPdfDatePopoverId = openExportPdfDate ? "export-pdf-date-popover" : undefined;
+  const exportPdfDatePopoverId = openExportPdfDate
+    ? "export-pdf-date-popover"
+    : undefined;
   const openEditProject = Boolean(editProjectAnchorEl);
-  const editProjectPopoverId = openEditProject ? "edit-project-popover" : undefined;
+  const editProjectPopoverId = openEditProject
+    ? "edit-project-popover"
+    : undefined;
 
   return (
-    <Layout showSearchBar={false} label="project-detail">
+    <Layout showSearchBar={false} label="Project-detail">
       <Box sx={{ p: 3 }}>
         <ProjectDetailHeader
           project={project}
@@ -428,7 +501,11 @@ const ProjectDetail = () => {
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <KeywordPositionChart keywords={keywords} projectId={project?.IDOBJ} token={token} />
+            <KeywordPositionChart
+              keywords={keywords}
+              projectId={project?.IDOBJ}
+              token={token}
+            />
           </Grid>
         </Grid>
 
