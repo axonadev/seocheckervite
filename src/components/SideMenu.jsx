@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Paper, Box, IconButton, Typography, Stack } from '@mui/material';
+import { Paper, Box, IconButton, Typography, Stack, Tooltip } from '@mui/material'; // Import Tooltip
 import LanguageIcon from '@mui/icons-material/Language';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -92,33 +92,43 @@ const SideMenu = ({ onProjectAdded }) => {
           spacing={2} 
           alignItems="center"
         >
-          <IconButton 
-            sx={{ color: '#fff' }}
-            onClick={handleNewProjectClick}
-          >
-            <AddCircleOutlineIcon />
-          </IconButton>
-          <IconButton sx={{ color: '#fff' }} onClick={handleHomeClick}>
-            <ArticleIcon />
-          </IconButton>
-          <IconButton 
-            sx={{ color: '#fff' }}
-            onClick={handleArchiveClick}
-          >
-            <StorageIcon /> 
-          </IconButton>
-          <IconButton 
-            sx={{ color: '#fff' }}
-            onClick={handleAllNotesClick}
-          >
-            <NotesIcon />
-          </IconButton>
-          <IconButton 
-            sx={{ color: '#fff' }}
-            onClick={handleClientProductsArchiveClick}
-          >
-            <ShoppingCartIcon />
-          </IconButton>
+          <Tooltip title="Aggiungi progetto" placement="right"> {/* Add Tooltip */} 
+            <IconButton 
+              sx={{ color: '#fff' }}
+              onClick={handleNewProjectClick}
+            >
+              <AddCircleOutlineIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Homepage" placement="right"> {/* Add Tooltip */} 
+            <IconButton sx={{ color: '#fff' }} onClick={handleHomeClick}>
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Archive" placement="right"> {/* Add Tooltip */} 
+            <IconButton 
+              sx={{ color: '#fff' }}
+              onClick={handleArchiveClick}
+            >
+              <StorageIcon /> 
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="All Notes" placement="right"> {/* Add Tooltip */} 
+            <IconButton 
+              sx={{ color: '#fff' }}
+              onClick={handleAllNotesClick}
+            >
+              <NotesIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Client Products" placement="right"> {/* Optional: Added tooltip for consistency */}
+            <IconButton 
+              sx={{ color: '#fff' }}
+              onClick={handleClientProductsArchiveClick}
+            >
+              <ShoppingCartIcon />
+            </IconButton>
+          </Tooltip>
         </Stack>
       </Box>
 
