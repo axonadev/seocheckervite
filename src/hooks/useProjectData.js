@@ -109,7 +109,9 @@ const useProjectData = (projectId, token, SERVERAPI, AZIENDA) => {
           const blob = await res.blob();
           const reader = new FileReader();
           reader.onloadend = () => {
-            setProjectLogo(reader.result);
+            setProjectLogo(
+              `/personal/${AZIENDA}/doc/logo/logo_${projectId}.png?v=${progImg}`
+            );
           };
           reader.readAsDataURL(blob);
         } else {

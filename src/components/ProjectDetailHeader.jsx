@@ -1,10 +1,5 @@
 import React, { useRef } from "react";
-import {
-  Box,
-  Typography,
-  Button,
-  Grid,
-} from "@mui/material";
+import { Box, Typography, Button, Grid } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
@@ -28,6 +23,10 @@ const ProjectDetailHeader = ({
       fileInputRef.current.click();
     }
   };
+
+  console.log("ProjectDetailHeader project:", projectLogo);
+
+  const [projectLogoUrl, setProjectLogoUrl] = React.useState(projectLogo);
 
   return (
     <Grid container spacing={2} sx={{ mb: 3, alignItems: "flex-start" }}>
@@ -76,7 +75,7 @@ const ProjectDetailHeader = ({
           onChange={onLogoChange}
           style={{ display: "none" }}
         />
-        {projectLogo ? (
+        {projectLogoUrl ? (
           <Box
             sx={{
               display: "flex",
@@ -88,11 +87,14 @@ const ProjectDetailHeader = ({
             onClick={handleLogoButtonClick}
           >
             <img
-              src={projectLogo}
-              alt="Project Logo"
+              src={projectLogoUrl}
+              alt=""
               style={{ maxHeight: "60px", maxWidth: "150px" }}
+              onError={() => {
+                console.error("Error loading logo image");
+                setProjectLogoUrl(null); // Reset logo if error occurs
+              }}
             />
-            
           </Box>
         ) : (
           <Button
