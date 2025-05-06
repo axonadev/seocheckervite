@@ -51,6 +51,7 @@ const ProjectDetail = () => {
   const [exportDateAnchorEl, setExportDateAnchorEl] = useState(null);
   const [exportPdfDateAnchorEl, setExportPdfDateAnchorEl] = useState(null);
   const [editProjectAnchorEl, setEditProjectAnchorEl] = useState(null);
+  const [projectLogoFile, setProjectLogoFile] = useState(projectLogo); // State for project logo file
 
   // State for progress indicator
   const [showProgress, setShowProgress] = useState(false);
@@ -174,6 +175,7 @@ const ProjectDetail = () => {
         }
       };
       reader.readAsDataURL(file);
+      setProjectLogoFile(file);
       event.target.value = null;
     }
   };
@@ -476,7 +478,7 @@ const ProjectDetail = () => {
       <Box sx={{ p: 3 }}>
         <ProjectDetailHeader
           project={project}
-          projectLogo={projectLogo}
+          projectLogo={projectLogoFile}
           onLogoChange={handleLogoChange}
           onOpenEditProject={handleOpenEditProject}
           editProjectAnchorEl={editProjectAnchorEl}

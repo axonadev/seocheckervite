@@ -1,3 +1,4 @@
+import cron from "node-cron";
 import { getAuthToken } from "./auth.mjs"; // Importa la funzione di login
 import { leggi, fai } from "./fRest.mjs"; // Importa la funzione di lettura del DB
 import { SERVERAPI } from "./env.mjs"; // Importa le variabili di ambiente
@@ -44,7 +45,7 @@ async function updateSchedule() {
     // Esegui l'aggiornamento sul database
     const queryClasse = `
       UPDATE ProgettiSerp
-      SET ProgettiSerp_Stato=1,
+      SET ProgettiSerp_Stato=100 + IDOBJ,
           ProgettiSerp_UltimoReport='${new Date().toISOString()}'
       WHERE AZIENDA='{AZIENDA}' AND ProgettiSerp_Stato=0
         AND ProgettiSerp_GruppoUpdate=${ultimoGruppo}
@@ -74,5 +75,8 @@ async function updateSchedule() {
   }
 }
 
-// Esegui la funzione
-updateSchedule();
+// Pianifica ogni giorno alle 03:00
+cron.schedule("0 4 * * *", () => {
+  // Esegui la funzione
+  updateSchedule();
+});

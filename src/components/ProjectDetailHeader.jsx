@@ -26,7 +26,14 @@ const ProjectDetailHeader = ({
 
   console.log("ProjectDetailHeader project:", projectLogo);
 
-  const [projectLogoUrl, setProjectLogoUrl] = React.useState(projectLogo);
+  const [projectLogoUrl, setProjectLogoUrl] = React.useState(projectLogo || "");
+
+  alert("ProjectDetailHeader projectLogoUrl: " + projectLogoUrl);
+  React.useEffect(() => {
+    if (projectLogo) {
+      setProjectLogoUrl(projectLogo);
+    }
+  }, [projectLogo]);
 
   return (
     <Grid container spacing={2} sx={{ mb: 3, alignItems: "flex-start" }}>
@@ -92,7 +99,7 @@ const ProjectDetailHeader = ({
               style={{ maxHeight: "60px", maxWidth: "150px" }}
               onError={() => {
                 console.error("Error loading logo image");
-                setProjectLogoUrl(null); // Reset logo if error occurs
+                //  setProjectLogoUrl(null); // Reset logo if error occurs
               }}
             />
           </Box>

@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import https from "https";
+import cron from "node-cron";
 import { getAuthToken } from "./auth.mjs"; // Importa la funzione di login
 import { leggi } from "./fRest.mjs"; // Importa la funzione di lettura del DB
 import { SERVERAPI, SITO } from "./env.mjs"; // Importa le variabili di ambiente
@@ -70,5 +71,8 @@ async function updateImgSite() {
   }
 }
 
-// Esegui la funzione
-updateImgSite();
+// Pianifica ogni giorno alle 03:00
+cron.schedule("0 3 * * *", () => {
+  // Esegui la funzione
+  updateImgSite();
+});
