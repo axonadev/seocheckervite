@@ -78,5 +78,7 @@ async function updateSchedule() {
 // Pianifica ogni giorno alle 03:00
 cron.schedule("0 4 * * *", () => {
   // Esegui la funzione
+  const now = new Date().toLocaleString();
+  console.log("AVVIO SCHEDULE", `[${now}] \n`);
   updateSchedule();
 });

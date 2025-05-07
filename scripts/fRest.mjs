@@ -25,8 +25,6 @@ export async function leggi(SERVERAPI, Token, DB, Where) {
   }
   const json = await response.json();
 
-  console.log("DEBUG leggi", json);
-
   return json;
 }
 
