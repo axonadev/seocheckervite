@@ -24,6 +24,8 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [comparisonData, setComparisonData] = useState([]);
   const [openFullScreenModal, setOpenFullScreenModal] = useState(false);
+  const [comparisonType, setComparisonType] = useState('months'); // 'months' o 'urls'
+  const [selectedUrls, setSelectedUrls] = useState([]);
 
   // Carica solo le date disponibili all'avvio
   useEffect(() => {
@@ -294,48 +296,129 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
   };
 
   // Funzione per eseguire il confronto tra i mesi selezionati
-  const compareSelectedMonths = async () => {
-    if (selectedMonths.length < 2) {
-      alert("Seleziona almeno due date per il confronto.");
-      return;
+  const compareSelectedItems = async () => {
+    if (comparisonType === 'months') {
+      if (selectedMonths.length < 2) {
+        alert("Seleziona almeno due date per il confronto.");
+        return;
+      }
+    
+        return;
+      
     }
     
     setIsLoading(true);
     
-    // Usa direttamente i dati dalle date selezionate
-    const keywordsData = selectedMonths.map(date => {
-      if (date === 'current') {
-        return keywords; // Usa i dati attuali
-      }
-      return keywordsByMonth[date] || [];
-    });
-    
-    // Calcola i dati di confronto per ogni mese selezionato
-    const comparisonData = {
-      labels: ['Pos. 1-10', 'Pos. 11-20', 'Pos. 21-50', 'Pos. > 50', 'Non definite'],
-      datasets: selectedMonths.map((month, index) => {
-        const dateData = calculateKeywordPositionData(keywordsData[index]).positionData;
-        const colors = getContrastColors(index);
-        return {
-          label: formatDateLabel(month),
-          data: [
-            dateData.pos1_10,
-            dateData.pos11_20, 
-            dateData.pos21_50,
-            dateData.pos_gt_50,
-            dateData.pos_undefined
-          ],
-          backgroundColor: colors.bg,
-          borderColor: colors.border,
-          borderWidth: 1
-        };
-      })
-    };
+    let comparisonData;
+    if (comparisonType === 'months') {
+      // Usa direttamente i dati dalle date selezionate
+      const keywordsData = selectedMonths.map(date => {
+        if (date === 'current') {
+          return keywords; // Usa i dati attuali
+        }
+        return keywordsByMonth[date] || [];
+      });
+      
+      // Calcola i dati di confronto per ogni mese selezionato
+      comparisonData = {
+        labels: ['Pos. 1-10', 'Pos. 11-20', 'Pos. 21-50', 'Pos. > 50', 'Non definite'],
+        datasets: selectedMonths.map((month, index) => {
+          const dateData = calculateKeywordPositionData(keywordsData[index]).positionData;
+          const colors = getContrastColors(index);
+          return {
+            label: formatDateLabel(month),
+            data: [
+              dateData.pos1_10,
+              dateData.pos11_20, 
+              dateData.pos21_50,
+              dateData.pos_gt_50,
+              dateData.pos_undefined
+            ],
+            backgroundColor: colors.bg,
+            borderColor: colors.border,
+            borderWidth: 1
+          };
+        })
+      };
+    } else {
+      comparisonData = getUrlComparisonData();
+    }
     
     setComparisonData(comparisonData);
     setOpenCompareModal(false);
     setOpenFullScreenModal(true);
     setIsLoading(false);
+  };
+
+  // Funzione per ottenere dati confronto URL
+  const getUrlComparisonData = () => {
+    const selectedDates = selectedMonths;
+    
+    // Ottieni tutte le URL uniche
+    const allUrls = Array.from(new Set(keywords.map(kw => kw.KeywordSerp_URL || kw.urlkey))).filter(url => url);
+    
+    // Per ogni data selezionata, conta le occorrenze di ogni URL
+    const datasets = selectedDates.map((date, dateIndex) => {
+      // Prendi le keyword della data selezionata
+      const dateKeywords = date === 'current' ? keywords : keywordsByMonth[date] || [];
+      
+      // Conta le occorrenze per ogni URL
+      const urlCounts = {};
+      dateKeywords.forEach(kw => {
+        const url = kw.KeywordSerp_URL || kw.urlkey || '';
+        const keyword = kw.KeywordSerp_Keyword || kw.keyword || '';
+        if (url && keyword) {
+          urlCounts[url] = (urlCounts[url] || 0) + 1;
+        }
+      });
+      
+      // Crea il dataset per questa data
+      const colors = getContrastColors(dateIndex);
+      return {
+        label: formatDateLabel(date),
+        data: allUrls.map(url => urlCounts[url] || 0),
+        backgroundColor: colors.bg,
+        borderColor: colors.border,
+        borderWidth: 1
+      };
+    });
+
+    return {
+      labels: allUrls,
+      datasets: datasets
+    };
+  };
+
+  // Funzione per esportare i dati in CSV
+  const exportToCSV = () => {
+    if (comparisonType !== 'urls' || !comparisonData) return;
+
+    // Prepara l'header con le date selezionate
+    const headers = ['URL', ...selectedMonths.map(date => formatDateLabel(date))];
+    
+    // Prepara le righe dei dati
+    const rows = comparisonData.labels.map((url, urlIndex) => {
+      return [
+        url,
+        ...comparisonData.datasets.map(dataset => dataset.data[urlIndex])
+      ];
+    });
+
+    // Crea il contenuto CSV
+    const csvContent = [
+      headers.join(';'),
+      ...rows.map(row => row.join(';'))
+    ].join('\n');
+
+    // Crea e scarica il file
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `confronto_url_${selectedMonths.join('_vs_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -356,7 +439,7 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
             onClick={openComparisonModal}
             startIcon={<CompareArrowsIcon />}
           >
-            Confronta mesi
+            Confronta
           </Button>
         </Box>
         
@@ -428,7 +511,7 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
         fullWidth
       >
         <DialogTitle>
-          Confronto tra mesi
+          Confronta
           <IconButton
             aria-label="close"
             onClick={closeComparisonModal}
@@ -444,33 +527,79 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
         </DialogTitle>
         
         <DialogContent>
-          <Typography variant="body1" sx={{ mb: 2 }}>
-            Seleziona i mesi da confrontare:
-          </Typography>
+          <FormControl fullWidth sx={{ mb: 2, mt: 1 }}>
+            <InputLabel>Tipo di confronto</InputLabel>
+            <Select
+              value={comparisonType}
+              onChange={(e) => {
+                setComparisonType(e.target.value);
+                setSelectedMonths([]);
+                setSelectedUrls([]);
+              }}
+              label="Tipo di confronto"
+            >
+              <MenuItem value="months">Confronto per mesi</MenuItem>
+              <MenuItem value="urls">Confronto per URL</MenuItem>
+            </Select>
+          </FormControl>
 
-          {/* Aggiungo opzione per dati attuali */}
-          <Grid container spacing={2}>
-            <Grid item xs={6} sm={4} md={3}>
-              <Button
-                variant={selectedMonths.includes('current') ? "contained" : "outlined"}
-                onClick={() => handleMonthSelect('current')}
-                sx={{ width: "100%" }}
-              >
-                Data attuale
-              </Button>
-            </Grid>
-            {Object.keys(keywordsByMonth).map((month) => (
-              <Grid item xs={6} sm={4} md={3} key={month}>
-                <Button
-                  variant={selectedMonths.includes(month) ? "contained" : "outlined"}
-                  onClick={() => handleMonthSelect(month)}
-                  sx={{ width: "100%" }}
-                >
-                  {formatDateLabel(month)}
-                </Button>
+          {comparisonType === 'months' ? (
+            <>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                Seleziona i mesi da confrontare:
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={6} sm={4} md={3}>
+                  <Button
+                    variant={selectedMonths.includes('current') ? "contained" : "outlined"}
+                    onClick={() => handleMonthSelect('current')}
+                    sx={{ width: "100%" }}
+                  >
+                    Data attuale
+                  </Button>
+                </Grid>
+                {Object.keys(keywordsByMonth).map((month) => (
+                  <Grid item xs={6} sm={4} md={3} key={month}>
+                    <Button
+                      variant={selectedMonths.includes(month) ? "contained" : "outlined"}
+                      onClick={() => handleMonthSelect(month)}
+                      sx={{ width: "100%" }}
+                    >
+                      {formatDateLabel(month)}
+                    </Button>
+                  </Grid>
+                ))}
               </Grid>
-            ))}
-          </Grid>
+            </>
+          ) : (
+            <>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                Seleziona i mesi da confrontare per vedere l'evoluzione delle URL:
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={6} sm={4} md={3}>
+                  <Button
+                    variant={selectedMonths.includes('current') ? "contained" : "outlined"}
+                    onClick={() => handleMonthSelect('current')}
+                    sx={{ width: "100%" }}
+                  >
+                    Data attuale
+                  </Button>
+                </Grid>
+                {Object.keys(keywordsByMonth).map((month) => (
+                  <Grid item xs={6} sm={4} md={3} key={month}>
+                    <Button
+                      variant={selectedMonths.includes(month) ? "contained" : "outlined"}
+                      onClick={() => handleMonthSelect(month)}
+                      sx={{ width: "100%" }}
+                    >
+                      {formatDateLabel(month)}
+                    </Button>
+                  </Grid>
+                ))}
+              </Grid>
+            </>
+          )}
         </DialogContent>
         
         <DialogActions>
@@ -478,12 +607,12 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
             Annulla
           </Button>
           <Button 
-            onClick={compareSelectedMonths} 
+            onClick={compareSelectedItems}
             color="primary" 
             variant="contained"
             disabled={selectedMonths.length < 2}
           >
-            Confronta 
+            Confronta
           </Button>
         </DialogActions>
       </Dialog>
@@ -504,28 +633,38 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
         }}
       >
         <DialogTitle>
-          Confronto tra mesi
-          <IconButton
-            aria-label="close"
-            onClick={() => setOpenFullScreenModal(false)}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
+          {comparisonType === 'months' ? 'Confronto tra mesi' : 'Confronto URL nel tempo'}
+          <Box sx={{ position: 'absolute', right: 48, top: 8, display: 'flex', gap: 1 }}>
+            {comparisonType === 'urls' && (
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={exportToCSV}
+              >
+                Esporta CSV
+              </Button>
+            )}
+            <IconButton
+              aria-label="close"
+              onClick={() => setOpenFullScreenModal(false)}
+              sx={{
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
         </DialogTitle>
         
         <DialogContent sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
-            Confronto dati keyword
+            {comparisonType === 'months' ? 'Confronto dati keyword' : 'Evoluzione delle URL nel tempo'}
           </Typography>
           
-          {/* Grafico a barre per il confronto */}
-          <Box sx={{ width: "100%", height: `${Math.max(500, selectedMonths.length * 100)}px`, mb: 2 }}>
+          <Box sx={{ width: "100%", height: comparisonType === 'months' ? 
+            `${Math.max(500, selectedMonths.length * 100)}px` : 
+            `${Math.max(500, Object.keys(getUrlComparisonData().labels).length * 50)}px`, 
+            mb: 2 }}>
             <Bar
               data={comparisonData}
               options={{
@@ -548,10 +687,8 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
                           label += ": ";
                         }
                         if (context.parsed.x !== null) {
-                          const total = context.dataset.data.reduce((a, b) => a + b, 0);
                           const value = context.parsed.x;
-                          const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + "%" : "0%";
-                          label += `${value} (${percentage})`;
+                          label += `${value} occorrenze`;
                         }
                         return label;
                       },
@@ -563,13 +700,13 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
                     beginAtZero: true,
                     title: {
                       display: true,
-                      text: 'Numero di keywords'
+                      text: 'Numero di occorrenze'
                     }
                   },
                   y: {
                     title: {
                       display: true,
-                      text: 'Posizione'
+                      text: comparisonType === 'months' ? 'Posizione' : 'URL'
                     }
                   }
                 }
@@ -577,12 +714,6 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
             />
           </Box>
         </DialogContent>
-        
-        <DialogActions>
-          <Button onClick={() => setOpenFullScreenModal(false)} color="primary">
-            Chiudi
-          </Button>
-        </DialogActions>
       </Dialog>
     </Paper>
   );
