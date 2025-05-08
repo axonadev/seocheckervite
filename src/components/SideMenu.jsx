@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Paper, Box, IconButton, Typography, Stack, Tooltip } from '@mui/material'; // Import Tooltip
+import { Paper, Box, IconButton, Typography, Stack, Tooltip } from '@mui/material';
 import LanguageIcon from '@mui/icons-material/Language';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -8,10 +8,14 @@ import NotesIcon from '@mui/icons-material/StickyNote2';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import NewProjectPopup from './NewProjectPopup';
 import { useNavigate } from 'react-router-dom';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useDispatch } from 'react-redux';
+import { logout } from '../store/storeLogin';
 
 const SideMenu = ({ onProjectAdded }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleNewProjectClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -45,6 +49,13 @@ const SideMenu = ({ onProjectAdded }) => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('axo_token');
+    sessionStorage.removeItem('axo_token');
+    dispatch(logout());
+    navigate('/login');
+  };
+
   return (
     <Paper
       sx={{
@@ -61,9 +72,9 @@ const SideMenu = ({ onProjectAdded }) => {
         display: "flex",
         flexDirection: "column",
         py: 2,
+        justifyContent: 'space-between',
       }}
     >
-      {/* Top section with logo and globe */}
       <Box sx={{ 
         display: 'flex', 
         flexDirection: 'column', 
@@ -92,7 +103,7 @@ const SideMenu = ({ onProjectAdded }) => {
           spacing={2} 
           alignItems="center"
         >
-          <Tooltip title="Aggiungi progetto" placement="right"> {/* Add Tooltip */} 
+          <Tooltip title="Aggiungi progetto" placement="right">
             <IconButton 
               sx={{ color: '#fff' }}
               onClick={handleNewProjectClick}
@@ -100,12 +111,12 @@ const SideMenu = ({ onProjectAdded }) => {
               <AddCircleOutlineIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Homepage" placement="right"> {/* Add Tooltip */} 
+          <Tooltip title="Homepage" placement="right">
             <IconButton sx={{ color: '#fff' }} onClick={handleHomeClick}>
               <ArticleIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Archive" placement="right"> {/* Add Tooltip */} 
+          <Tooltip title="Archive" placement="right">
             <IconButton 
               sx={{ color: '#fff' }}
               onClick={handleArchiveClick}
@@ -113,7 +124,7 @@ const SideMenu = ({ onProjectAdded }) => {
               <StorageIcon /> 
             </IconButton>
           </Tooltip>
-          <Tooltip title="All Notes" placement="right"> {/* Add Tooltip */} 
+          <Tooltip title="All Notes" placement="right">
             <IconButton 
               sx={{ color: '#fff' }}
               onClick={handleAllNotesClick}
@@ -121,7 +132,7 @@ const SideMenu = ({ onProjectAdded }) => {
               <NotesIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Client Products" placement="right"> {/* Optional: Added tooltip for consistency */}
+          <Tooltip title="Client Products" placement="right">
             <IconButton 
               sx={{ color: '#fff' }}
               onClick={handleClientProductsArchiveClick}
@@ -130,6 +141,17 @@ const SideMenu = ({ onProjectAdded }) => {
             </IconButton>
           </Tooltip>
         </Stack>
+      </Box>
+
+      <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 1 }}>
+        <Tooltip title="Logout" placement="right">
+          <IconButton
+            sx={{ color: '#fff' }}
+            onClick={handleLogout}
+          >
+            <LogoutIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       <NewProjectPopup 
