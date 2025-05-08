@@ -17,31 +17,24 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
   const [availableDates, setAvailableDates] = useState([]);
   const [historicalKeywords, setHistoricalKeywords] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  // Salva i dati storici per mese per evitare richieste multiple per lo stesso mese
   const [keywordsByMonth, setKeywordsByMonth] = useState({});
-  const [allHistoricalKeywords, setAllHistoricalKeywords] = useState([]);
   
   // Stati per il modale di confronto
   const [openCompareModal, setOpenCompareModal] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [comparisonData, setComparisonData] = useState([]);
-  // Aggiungi uno stato per il modale fullscreen
   const [openFullScreenModal, setOpenFullScreenModal] = useState(false);
 
-  // Carica tutti i dati storici una volta all'inizio
+  // Carica solo le date disponibili all'avvio
   useEffect(() => {
     if (projectId && token) {
-      fetchAllHistoricalKeywords();
+      fetchAvailableDates();
     }
   }, [projectId, token, SERVERAPI]);
 
-  // Carica tutti i dati storici delle keywords
-  const fetchAllHistoricalKeywords = async () => {
+  // Funzione per caricare solo le date disponibili
+  const fetchAvailableDates = async () => {
     try {
-      console.log("Caricamento di tutti i dati storici delle keywords");
-      setIsLoading(true);
-      
-      // Chiamata API per ottenere tutti i dati delle keyword
       const keywordsUrl = `${SERVERAPI}/api/axo_sel/${token}/progettiserp/progettiserpsel/leggiKeyWords/${projectId}`;
       const response = await fetch(keywordsUrl);
       
@@ -51,27 +44,13 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
       
       const data = await response.json();
       
-      if (data && data.Itemset && data.Itemset.v_keywords && Array.isArray(data.Itemset.v_keywords)) {
-        console.log(`Caricate ${data.Itemset.v_keywords.length} keyword storiche totali`);
-        
-        // Mappa le keyword per garantire la compatibilità con calculateKeywordPositionData
-        const mappedKeywords = data.Itemset.v_keywords.map(kw => ({
-          ...kw,
-          KeywordSerp_Posizione: kw.posizione || kw.KeywordSerp_Posizione || null
-        }));
-        
-        setAllHistoricalKeywords(mappedKeywords);
-        
-        // Estrai tutte le date uniche dalle keyword e costruisci il menu a tendina
-        const uniqueDates = extractUniqueDates(mappedKeywords);
-        setAvailableDates(uniqueDates);
-        
-        // Organizza le keyword per mese per uso futuro
+      if (data?.Itemset?.v_keywords && Array.isArray(data.Itemset.v_keywords)) {
+        // Organizziamo i dati per mese
         const keywordsByMonthMap = {};
-        mappedKeywords.forEach(kw => {
+        data.Itemset.v_keywords.forEach(kw => {
           if (kw.dataestrazione) {
-            const dateObj = new Date(kw.dataestrazione);
-            const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-01`;
+            const date = new Date(kw.dataestrazione);
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             
             if (!keywordsByMonthMap[monthKey]) {
               keywordsByMonthMap[monthKey] = [];
@@ -79,15 +58,67 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
             keywordsByMonthMap[monthKey].push(kw);
           }
         });
+
+        // Ordina i mesi cronologicamente
+        const sortedMonths = Object.keys(keywordsByMonthMap).sort();
         
-        setKeywordsByMonth(keywordsByMonthMap);
-      } else if (data && data.Itemset && data.Itemset.SEO_STATKEYWORDS) {
-        console.log("Formato alternativo della risposta, nessuna keyword trovata");
-      } else {
-        console.log("Formato risposta non riconosciuto o nessuna keyword trovata");
+        // Calcola i dati cumulativi per ogni mese
+        const cumulativeDataByMonth = {};
+        let previousKeywords = [];
+        
+        sortedMonths.forEach(month => {
+          // Aggiungi le keyword del mese corrente a quelle precedenti
+          previousKeywords = [...previousKeywords, ...keywordsByMonthMap[month]];
+          cumulativeDataByMonth[month] = [...previousKeywords];
+        });
+        
+        // Aggiorniamo lo stato con i dati cumulativi
+        setKeywordsByMonth(cumulativeDataByMonth);
+        
+        // Estraiamo le date uniche per il menu a tendina, ordinate dalla più recente
+        const uniqueMonths = sortedMonths.reverse(); // Reverse per avere i più recenti prima
+        setAvailableDates(uniqueMonths);
       }
     } catch (error) {
-      console.error("Errore nel recupero dei dati storici:", error);
+      console.error("Errore nel recupero delle date:", error);
+    }
+  };
+
+  // Funzione per caricare i dati di un mese specifico
+  const fetchMonthData = async (monthKey) => {
+    try {
+      setIsLoading(true);
+      const keywordsUrl = `${SERVERAPI}/api/axo_sel/${token}/progettiserp/progettiserpsel/leggiKeyWords/${projectId}`;
+      const response = await fetch(keywordsUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Errore API: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data?.Itemset?.v_keywords && Array.isArray(data.Itemset.v_keywords)) {
+        const selectedDate = new Date(monthKey);
+        const monthKeywords = data.Itemset.v_keywords.filter(kw => {
+          if (kw.dataestrazione) {
+            const keywordDate = new Date(kw.dataestrazione);
+            return keywordDate.getFullYear() === selectedDate.getFullYear() && 
+                   keywordDate.getMonth() === selectedDate.getMonth();
+          }
+          return false;
+        });
+        
+        setKeywordsByMonth(prev => ({
+          ...prev,
+          [monthKey]: monthKeywords
+        }));
+        
+        return monthKeywords;
+      }
+      return [];
+    } catch (error) {
+      console.error("Errore nel recupero dei dati del mese:", error);
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -120,49 +151,23 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
     setSelectedDate(newDate);
     
     if (newDate === 'current') {
-      // Usa i dati correnti
       setHistoricalKeywords(null);
       return;
     }
     
-    // Calcola le keyword cumulative fino alla data selezionata
-    const selectedDateObj = new Date(newDate);
-    
-    // Filtra tutte le keyword con data di estrazione fino al mese selezionato
-    const cumulativeKeywords = allHistoricalKeywords.filter(kw => {
-      if (kw.dataestrazione) {
-        const keywordDate = new Date(kw.dataestrazione);
-        // Considera solo le keyword fino al mese selezionato (incluso)
-        return (
-          keywordDate.getFullYear() < selectedDateObj.getFullYear() || 
-          (keywordDate.getFullYear() === selectedDateObj.getFullYear() && 
-           keywordDate.getMonth() <= selectedDateObj.getMonth())
-        );
-      }
-      return false;
-    });
-    
-    console.log(`Trovate ${cumulativeKeywords.length} keyword cumulative fino a ${formatDateLabel(newDate)}`);
-    
-    // Se non ci sono keyword cumulative, mostra un array vuoto
-    if (cumulativeKeywords.length === 0) {
-      console.log("Nessuna keyword trovata fino alla data selezionata");
-      setHistoricalKeywords([]);
-    } else {
-      // Usa tutte le keyword cumulative senza rimuovere i duplicati
-      setHistoricalKeywords(cumulativeKeywords);
-    }
+    // Usa i dati cumulativi già calcolati
+    setHistoricalKeywords(keywordsByMonth[newDate]);
   };
 
   // Formatta il testo della data per la visualizzazione nel menu
   const formatDateLabel = (dateStr) => {
     if (dateStr === 'current') return "Data corrente";
     
-    const date = new Date(dateStr);
-    const month = date.toLocaleString('it-IT', { month: 'long' });
-    const year = date.getFullYear();
-    
-    return `${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
+    const date = new Date(`${dateStr}-01`); // Aggiungiamo -01 per avere una data valida
+    return date.toLocaleString('it-IT', { 
+      month: 'long', 
+      year: 'numeric'
+    });
   };
 
   // Determina quali keyword usare per il grafico
@@ -271,59 +276,66 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
     setSelectedMonths(newSelectedMonths);
   };
 
+  // Funzione per generare colori contrastanti per il confronto
+  const getContrastColors = (index) => {
+    const colors = [
+      { bg: "rgba(255, 99, 132, 0.6)", border: "rgba(255, 99, 132, 1)" },      
+      { bg: "rgba(54, 162, 235, 0.6)", border: "rgba(54, 162, 235, 1)" },      
+      { bg: "rgba(255, 206, 86, 0.6)", border: "rgba(255, 206, 86, 1)" },      // Giallo
+      { bg: "rgba(75, 192, 192, 0.6)", border: "rgba(75, 192, 192, 1)" },      // Verde acqua
+      { bg: "rgba(153, 102, 255, 0.6)", border: "rgba(153, 102, 255, 1)" },    // Viola
+      { bg: "rgba(255, 159, 64, 0.6)", border: "rgba(255, 159, 64, 1)" },      // Arancione
+      { bg: "rgba(201, 203, 207, 0.6)", border: "rgba(201, 203, 207, 1)" },    // Grigio
+      { bg: "rgba(255, 0, 0, 0.6)", border: "rgba(255, 0, 0, 1)" },            // Rosso puro
+      { bg: "rgba(0, 255, 0, 0.6)", border: "rgba(0, 255, 0, 1)" },            // Verde puro
+      { bg: "rgba(0, 0, 255, 0.6)", border: "rgba(0, 0, 255, 1)" },            // Blu puro
+    ];
+    return colors[index % colors.length];
+  };
+
   // Funzione per eseguire il confronto tra i mesi selezionati
-  const compareSelectedMonths = () => {
-    if (selectedMonths.length !== 2) {
-      alert("Seleziona esattamente due mesi per il confronto.");
+  const compareSelectedMonths = async () => {
+    if (selectedMonths.length < 2) {
+      alert("Seleziona almeno due date per il confronto.");
       return;
     }
     
-    // Estrai i dati delle keyword per i mesi selezionati
-    const [month1, month2] = selectedMonths;
-    const keywordsMonth1 = keywordsByMonth[month1] || [];
-    const keywordsMonth2 = keywordsByMonth[month2] || [];
+    setIsLoading(true);
     
-    // Calcola i dati di confronto per entrambi i mesi separatamente
-    const month1Data = calculateKeywordPositionData(keywordsMonth1).positionData;
-    const month2Data = calculateKeywordPositionData(keywordsMonth2).positionData;
+    // Usa direttamente i dati dalle date selezionate
+    const keywordsData = selectedMonths.map(date => {
+      if (date === 'current') {
+        return keywords; // Usa i dati attuali
+      }
+      return keywordsByMonth[date] || [];
+    });
     
-    // Prepara i dati per la visualizzazione del confronto
+    // Calcola i dati di confronto per ogni mese selezionato
     const comparisonData = {
       labels: ['Pos. 1-10', 'Pos. 11-20', 'Pos. 21-50', 'Pos. > 50', 'Non definite'],
-      datasets: [
-        {
-          label: formatDateLabel(month1),
+      datasets: selectedMonths.map((month, index) => {
+        const dateData = calculateKeywordPositionData(keywordsData[index]).positionData;
+        const colors = getContrastColors(index);
+        return {
+          label: formatDateLabel(month),
           data: [
-            month1Data.pos1_10,
-            month1Data.pos11_20, 
-            month1Data.pos21_50,
-            month1Data.pos_gt_50,
-            month1Data.pos_undefined
+            dateData.pos1_10,
+            dateData.pos11_20, 
+            dateData.pos21_50,
+            dateData.pos_gt_50,
+            dateData.pos_undefined
           ],
-          backgroundColor: 'rgba(75, 192, 192, 0.6)',
-          borderColor: 'rgba(75, 192, 192, 1)',
+          backgroundColor: colors.bg,
+          borderColor: colors.border,
           borderWidth: 1
-        },
-        {
-          label: formatDateLabel(month2),
-          data: [
-            month2Data.pos1_10,
-            month2Data.pos11_20, 
-            month2Data.pos21_50,
-            month2Data.pos_gt_50,
-            month2Data.pos_undefined
-          ],
-          backgroundColor: 'rgba(255, 99, 132, 0.6)',
-          borderColor: 'rgba(255, 99, 132, 1)',
-          borderWidth: 1
-        }
-      ]
+        };
+      })
     };
     
     setComparisonData(comparisonData);
-    // Chiudi il modale di selezione e apri quello del confronto
     setOpenCompareModal(false);
     setOpenFullScreenModal(true);
+    setIsLoading(false);
   };
 
   return (
@@ -333,31 +345,43 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
       }}
     >
-      <Typography variant="h6" sx={{ mb: 2, textAlign: "center" }}>
-        % Presenza url in pagina
-      </Typography>
-      
-      {/* Selettore della data */}
-      <FormControl variant="outlined" size="small" sx={{ minWidth: 200, mb: 2 }}>
-        <InputLabel id="historical-date-select-label">Seleziona data</InputLabel>
-        <Select
-          labelId="historical-date-select-label"
-          id="historical-date-select"
-          value={selectedDate}
-          onChange={handleDateChange}
-          label="Seleziona data"
-        >
-          <MenuItem value="current">Data corrente</MenuItem>
-          {availableDates.map((date) => (
-            <MenuItem key={date} value={date}>
-              {formatDateLabel(date)}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      {/* Header con titolo e pulsanti */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={openComparisonModal}
+            startIcon={<CompareArrowsIcon />}
+          >
+            Confronta mesi
+          </Button>
+        </Box>
+        
+        <Typography variant="h6" sx={{ textAlign: "center", flex: 1 }}>
+          % Presenza url in pagina
+        </Typography>
+
+        <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
+          <InputLabel id="historical-date-select-label">Seleziona data</InputLabel>
+          <Select
+            labelId="historical-date-select-label"
+            id="historical-date-select"
+            value={selectedDate}
+            onChange={handleDateChange}
+            label="Seleziona data"
+          >
+            <MenuItem value="current">Data corrente</MenuItem>
+            {availableDates.map((date) => (
+              <MenuItem key={date} value={date}>
+                {formatDateLabel(date)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
       
       <Box
         sx={{
@@ -391,17 +415,6 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
         )}
       </Box>
       
-      {/* Pulsante per aprire il modale di confronto */}
-      <Button
-        variant="outlined"
-        size="small"
-        onClick={openComparisonModal}
-        sx={{ mb: 2, alignSelf: "flex-start" }}
-        startIcon={<CompareArrowsIcon />}
-      >
-        Confronta mesi
-      </Button>
-      
       {/* Box note progetto sotto la legenda/grafico */}
       <Box sx={{ width: '100%', mt: 3 }}>
         <ProjectNotes projectId={projectId} token={token} />
@@ -432,10 +445,20 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
         
         <DialogContent>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            Seleziona due mesi da confrontare:
+            Seleziona i mesi da confrontare:
           </Typography>
-          
+
+          {/* Aggiungo opzione per dati attuali */}
           <Grid container spacing={2}>
+            <Grid item xs={6} sm={4} md={3}>
+              <Button
+                variant={selectedMonths.includes('current') ? "contained" : "outlined"}
+                onClick={() => handleMonthSelect('current')}
+                sx={{ width: "100%" }}
+              >
+                Data attuale
+              </Button>
+            </Grid>
             {Object.keys(keywordsByMonth).map((month) => (
               <Grid item xs={6} sm={4} md={3} key={month}>
                 <Button
@@ -454,8 +477,13 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
           <Button onClick={closeComparisonModal} color="primary">
             Annulla
           </Button>
-          <Button onClick={compareSelectedMonths} color="primary" variant="contained">
-            Confronta
+          <Button 
+            onClick={compareSelectedMonths} 
+            color="primary" 
+            variant="contained"
+            disabled={selectedMonths.length < 2}
+          >
+            Confronta 
           </Button>
         </DialogActions>
       </Dialog>
@@ -497,11 +525,11 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
           </Typography>
           
           {/* Grafico a barre per il confronto */}
-          <Box sx={{ width: "100%", height: "500px", mb: 2 }}>
+          <Box sx={{ width: "100%", height: `${Math.max(500, selectedMonths.length * 100)}px`, mb: 2 }}>
             <Bar
               data={comparisonData}
               options={{
-                indexAxis: 'y', // Questo rende il grafico orizzontale
+                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
@@ -519,9 +547,9 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
                         if (label) {
                           label += ": ";
                         }
-                        if (context.parsed.x !== null) { // Cambiato da y a x per grafico orizzontale
+                        if (context.parsed.x !== null) {
                           const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                          const value = context.parsed.x; // Cambiato da y a x per grafico orizzontale
+                          const value = context.parsed.x;
                           const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + "%" : "0%";
                           label += `${value} (${percentage})`;
                         }
@@ -543,18 +571,8 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
                       display: true,
                       text: 'Posizione'
                     }
-                  },
-                },
-                layout: {
-                  padding: {
-                    left: 10,
-                    right: 30,
-                    top: 0,
-                    bottom: 0
                   }
-                },
-                barThickness: 30, // Controlla lo spessore delle barre
-                maxBarThickness: 40
+                }
               }}
             />
           </Box>

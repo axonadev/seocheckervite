@@ -18,17 +18,21 @@ export const calculateKeywordPositionData = (keywords = []) => {
   };
 
   keywords.forEach((k) => {
-    const position = k.KeywordSerp_Posizione;
-    if (position >= 1 && position <= 10) {
-      positionData.pos1_10++;
-    } else if (position >= 11 && position <= 20) {
-      positionData.pos11_20++;
-    } else if (position >= 21 && position <= 50) {
-      positionData.pos21_50++;
-    } else if (position > 50) {
-      positionData.pos_gt_50++;
+    // Gestisce sia il formato corrente (KeywordSerp_Posizione) che quello storico (posizione)
+    const position = parseInt(k.KeywordSerp_Posizione || k.posizione);
+    
+    if (!isNaN(position) && position > 0) {
+      if (position <= 10) {
+        positionData.pos1_10++;
+      } else if (position <= 20) {
+        positionData.pos11_20++;
+      } else if (position <= 50) {
+        positionData.pos21_50++;
+      } else {
+        positionData.pos_gt_50++;
+      }
     } else {
-      // Includes null, undefined, "", 0, or negative values
+      // Include null, undefined, "", 0, o valori negativi
       positionData.pos_undefined++;
     }
   });
