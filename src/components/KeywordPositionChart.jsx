@@ -302,9 +302,6 @@ const KeywordPositionChart = ({ keywords, projectId, token }) => {
         alert("Seleziona almeno due date per il confronto.");
         return;
       }
-    
-        return;
-      
     }
     
     setIsLoading(true);
