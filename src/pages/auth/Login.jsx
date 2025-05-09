@@ -1,136 +1,158 @@
 import React, { useState } from "react";
-
 import { useNavigate } from "react-router-dom";
 import { login } from "../../store/storeLogin";
 import { useDispatch } from "react-redux";
-import { Box, Button, TextField } from "@mui/material";
-
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Paper,
+  InputAdornment,
+  IconButton,
+} from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import useEnv from "../../hooks/useEnv";
 
-function LoginForm() {
-  const { SERVERAPI, AZIENDA } = useEnv();
+const DEFAULT_EMAIL = "marco@ampartners.info";
+const DEFAULT_PASSWORD = "06087680960";
+const IMAGE_URL =
+  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80";
 
-  const [azienda, setAzienda] = useState(AZIENDA);
-  const [user, setUser] = useState("");
-  const [password, setPassword] = useState("");
+function LoginForm() {
+  const { SERVERAPI } = useEnv();
+  const [user, setUser] = useState(DEFAULT_EMAIL);
+  const [password, setPassword] = useState(DEFAULT_PASSWORD);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  /**
-   * Login call
-   * @param event
-   * @returns {Promise<Response>}
-   */
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setLoading(true); // Start Loading
+  const handleShowPassword = () => setShowPassword((show) => !show);
 
-    // Compile options
-    const options = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        azienda,
-        user,
-        password,
-      }),
-    };
-
-    // Call
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
     try {
-      const response = await fetch(SERVERAPI + "/api/axo_login", options);
+      const response = await fetch(`${SERVERAPI}/api/axo_login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ azienda: "06087680960", user, password }),
+      });
       const data = await response.json();
+      if (response.ok && data.Token) {
+        localStorage.setItem("axo_token", data.Token);
+        sessionStorage.setItem("axo_token", data.Token);
+        localStorage.setItem("axo_nomeLocale", data?.Itemset?.LoginSoggetto[0]?.Soggetti_Nome1 + " " + data?.Itemset?.LoginSoggetto[0]?.Soggetti_Nome2);
 
-      if (response.ok) {
-        if (data.Errore) {
-          setError(data?.Errore || "Login failed");
-          setLoading(false); // Stop Loading
-        } else {
-          localStorage.setItem("axo_token", data.Token); // Salva il token in locale
-          dispatch(login(data)); // Invia i dati utente allo store
-          navigate("/dashboard"); // Redirect alla dashboard
-        }
+        dispatch(login(data));
+        navigate("/projects"); // Changed from "/dashboard" to "/projects"
       } else {
-        setError(data?.Errore || "Login failed");
-        setLoading(false); // Stop Loading
+        setError(data?.Errore || "Credenziali non valide");
       }
-    } catch (error) {
-      setError("An error occurred. Please try again.");
-      setLoading(false); // Stop Loading
+    } catch (err) {
+      setError("Errore di connessione");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Box
       sx={{
+        minHeight: "100vh",
         display: "flex",
-        flexDirection: "column",
+        alignItems: "center",
         justifyContent: "center",
+        background: "#f5f5f5",
       }}
     >
-      {" "}
-      <TextField
-        label="Piva azienda"
-        placeholder="01234567890"
-        required
-        value={azienda}
-        onChange={(e) => setAzienda(e.currentTarget.value)}
-        margin="normal"
-      />
-      <TextField
-        label="User/Mail"
-        placeholder="user@mail.com"
-        required
-        value={user}
-        onChange={(e) => setUser(e.currentTarget.value)}
-        margin="normal"
-      />
-      <TextField
-        label="Password"
-        placeholder="password"
-        required
-        mt="md"
-        value={password}
-        onChange={(e) => setPassword(e.currentTarget.value)}
-        margin="normal"
-      />
-      <Button
-        variant="contained"
-        onClick={handleSubmit}
-        sx={{ fontSize: "0.7rem" }}
-      >
-        Login
-      </Button>
-      <Box
+      <Paper
+        elevation={3}
         sx={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          float: "left",
-          marginTop: "12px",
+          width: 350,
+          p: 0,
+          borderRadius: 3,
+          overflow: "hidden",
         }}
       >
-        <Button
-          variant="contained"
-          onClick={() => {
-            setPagina("registra");
+        <Box
+          sx={{
+            width: "100%",
+            height: 140,
+            background: `url(${IMAGE_URL}) center/cover no-repeat`,
+          }}
+        />
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
           }}
         >
-          non sei ancora registrato?
-        </Button>
-        <Button
-          variant="text"
-          onClick={() => {
-            setPagina("recupero");
-          }}
-          sx={{ fontSize: "0.7rem" }}
-        >
-          hai perso le credenziali?
-        </Button>
-      </Box>
+          <TextField
+            label="Email"
+            type="email"
+            value={user}
+            onChange={(e) => setUser(e.target.value)}
+            required
+            autoFocus
+            autoComplete="username"
+          />
+          <TextField
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={handleShowPassword}
+                    edge="end"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+          {error && (
+            <Typography
+              color="error"
+              fontSize={14}
+              sx={{ mt: 1 }}
+            >{error}</Typography>
+          )}
+          <Button
+            type="submit"
+            variant="contained"
+            color="secondary"
+            sx={{
+              mt: 2,
+              borderRadius: 10,
+              fontWeight: 600,
+              fontSize: 16,
+              py: 1,
+            }}
+            disabled={loading}
+            fullWidth
+          >
+            {loading ? "Attendi..." : "Accedi"}
+          </Button>
+        </Box>
+      </Paper>
     </Box>
   );
 }
+
 export default LoginForm;

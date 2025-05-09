@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 const InvisibleRoutesIfAuth = () => {
   const user = useSelector((state) => state.auth.value.token);
 
-  return user ? <Navigate to="/dashboard" /> : <Outlet />;
+  return user ? <Navigate to="/projects" /> : <Outlet />;
 };
 
 export default InvisibleRoutesIfAuth;

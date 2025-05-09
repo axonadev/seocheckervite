@@ -16,16 +16,40 @@ export const storeLogin = createSlice({
     reset: (state) => {
       state.value = {
         token: "",
+        logged: false,
+        guest: true,
+        authlevel: 0,
+        nomesoggetto: "GUEST",
+        cognomesoggetto: "GUEST",
       };
     },
     setToken: (state, action) => {
       state.value.token = action.payload;
     },
     login: (state, action) => {
-      state.value.token = action.payload;
+      state.value.token = action.payload.Token || action.payload.token;
+      state.value.logged = true;
+      state.value.guest = false;
+      state.value.nomesoggetto =
+        action.payload.NomeSoggetto ||
+        action.payload.nomesoggetto ||
+        "USER";
+      state.value.cognomesoggetto =
+        action.payload.CognomeSoggetto ||
+        action.payload.cognomesoggetto ||
+        "";
+      state.value.authlevel =
+        action.payload.AuthLevel || action.payload.authlevel || 1;
     },
     logout: (state) => {
-      state.value.token = "";
+      state.value = {
+        token: "",
+        logged: false,
+        guest: true,
+        authlevel: 0,
+        nomesoggetto: "GUEST",
+        cognomesoggetto: "GUEST",
+      };
     },
     cambiaStato: (state, action) => {
       state.value.logged = action.payload;

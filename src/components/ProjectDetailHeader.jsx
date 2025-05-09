@@ -28,7 +28,6 @@ const ProjectDetailHeader = ({
 
   const [projectLogoUrl, setProjectLogoUrl] = React.useState(projectLogo || "");
 
-  alert("ProjectDetailHeader projectLogoUrl: " + projectLogoUrl);
   React.useEffect(() => {
     if (projectLogo) {
       setProjectLogoUrl(projectLogo);

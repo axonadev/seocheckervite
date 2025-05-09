@@ -7,7 +7,7 @@ import { Scrivi, Leggi } from "../utility/callFetch"; // Assuming Scrivi handles
 
 const ProjectNotes = ({ projectId, token }) => {
 
-  const nomeLocale = localStorage.getItem("axo_nomeLocale") || "";
+  const nomeLocale = localStorage.getItem("axo_nomeLocale") || localStorage.getItem("axo_user")|| "";
 
   const { SERVERAPI } = useEnv();
   const [notes, setNotes] = useState([]);

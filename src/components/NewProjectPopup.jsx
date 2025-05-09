@@ -78,9 +78,17 @@ const NewProjectPopup = ({ anchorEl, onClose, onProjectAdded }) => {
 
     setLoading(true);
 
+    const projectUrlPattern =projectUrl.endsWith("/")
+    ? projectUrl.slice(0, -1)
+    : projectUrl
+
+
     const newProject = {
       ProgettiSerp_Nome: projectName,
-      ProgettiSerp_DNS: projectUrl
+      // sostituire / finale con niente
+
+      ProgettiSerp_DNS: projectUrlPattern
+        .replaceAll("www.", "")
         .replaceAll("https://", "")
         .replaceAll("http://", ""),
       ProgettiSerp_Stato: 0,
