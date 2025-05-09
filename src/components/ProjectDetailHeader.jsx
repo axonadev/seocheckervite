@@ -98,7 +98,7 @@ const ProjectDetailHeader = ({
               style={{ maxHeight: "60px", maxWidth: "150px" }}
               onError={() => {
                 console.error("Error loading logo image");
-                //  setProjectLogoUrl(null); // Reset logo if error occurs
+                setProjectLogoUrl(null); // Reset logo if error occurs
               }}
             />
           </Box>

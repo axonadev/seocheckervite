@@ -72,7 +72,7 @@ async function updateImgSite() {
 }
 
 // Pianifica ogni giorno alle 03:00
-cron.schedule("0 3 * * *", () => {
+cron.schedule("0 6 * * *", () => {
   // Esegui la funzione
   const now = new Date().toLocaleString();
   console.log("AVVIO UPDIMG", `[${now}] \n`);
