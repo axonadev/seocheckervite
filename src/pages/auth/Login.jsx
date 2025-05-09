@@ -46,8 +46,10 @@ function LoginForm() {
       if (response.ok && data.Token) {
         localStorage.setItem("axo_token", data.Token);
         sessionStorage.setItem("axo_token", data.Token);
+        localStorage.setItem("axo_nomeLocale", data?.Itemset?.LoginSoggetto[0]?.Soggetti_Nome1 + " " + data?.Itemset?.LoginSoggetto[0]?.Soggetti_Nome2);
+
         dispatch(login(data));
-        navigate("/dashboard");
+        navigate("/projects"); // Changed from "/dashboard" to "/projects"
       } else {
         setError(data?.Errore || "Credenziali non valide");
       }

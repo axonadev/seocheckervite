@@ -23,26 +23,25 @@ const RouteTransition = () => {
   return (
     <>
       <Routes>
-        <Route path={"/"} element={<Homepage onLoadStart={() => setIsLoading(true)} onLoadComplete={() => setIsLoading(false)} />} />
-        <Route path={"/projects"} element={<Homepage onLoadStart={() => setIsLoading(true)} onLoadComplete={() => setIsLoading(false)} />} />
-        <Route path={"/archive"} element={<Archive />} />
-        <Route path={"/projects/:id"} element={<ProjectDetail />} />
-        <Route path={"/all-notes"} element={<AllNotesPage token={localStorage.getItem("axo_token")} />} />
-        <Route path={"/client-products-archive"} element={<ClientProductsArchive />} />
         <Route element={<InvisibleRoutesIfAuth />}>
           <Route path={"/login"} element={<LoginPage />} />
         </Route>
         <Route element={<ProtectedRoutes />}>
+          <Route path={"/"} element={<Homepage onLoadStart={() => setIsLoading(true)} onLoadComplete={() => setIsLoading(false)} />} />
+          <Route path={"/projects"} element={<Homepage onLoadStart={() => setIsLoading(true)} onLoadComplete={() => setIsLoading(false)} />} />
+          <Route path={"/archive"} element={<Archive />} />
+          <Route path={"/projects/:id"} element={<ProjectDetail />} />
+          <Route path={"/all-notes"} element={<AllNotesPage token={localStorage.getItem("axo_token")} />} />
+          <Route path={"/client-products-archive"} element={<ClientProductsArchive />} />
           <Route element={<Dashboard />} path={"/dashboard"} />
         </Route>
       </Routes>
-      {isLoading && location.pathname === "/" || location.pathname === "/projects" ? <Loader /> : null}
+      {isLoading && (location.pathname === "/" || location.pathname === "/projects") ? <Loader /> : null}
     </>
   );
 };
 
 function App() {
-  localStorage.setItem("axo_token", "QRAjF0GHIbrQKZ1VH1pJBxfz2T4cd8FSKvbCtks1HdfLJttHDI_s_NzRfCsorSwawjBM2XxrTbPuzHWNVP6T7QkNaMCX_p_UUby6ZfcJkhwuvYFoMkRc7ma3Nn5zKY49jeO3");
   
   return (
     <ThemeProvider theme={theme}>
