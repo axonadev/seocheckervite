@@ -43,9 +43,17 @@ async function updateSchedule() {
     }
 
     // Esegui l'aggiornamento sul database
-    const queryClasse = `
+    /* const queryClasse = `
       UPDATE ProgettiSerp
       SET ProgettiSerp_Stato=100 + IDOBJ,
+          ProgettiSerp_UltimoReport='${new Date().toISOString()}'
+      WHERE AZIENDA='{AZIENDA}' AND ProgettiSerp_Stato=0
+        AND ProgettiSerp_GruppoUpdate=${ultimoGruppo}
+    `; */
+
+    const queryClasse = `
+      UPDATE ProgettiSerp
+      SET ProgettiSerp_Stato=1,
           ProgettiSerp_UltimoReport='${new Date().toISOString()}'
       WHERE AZIENDA='{AZIENDA}' AND ProgettiSerp_Stato=0
         AND ProgettiSerp_GruppoUpdate=${ultimoGruppo}
@@ -76,7 +84,7 @@ async function updateSchedule() {
 }
 
 // Pianifica ogni giorno alle 03:00
-cron.schedule("0 4 * * *", () => {
+cron.schedule("10 4 * * *", () => {
   // Esegui la funzione
   const now = new Date().toLocaleString();
   console.log("AVVIO SCHEDULE", `[${now}] \n`);

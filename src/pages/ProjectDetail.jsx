@@ -37,7 +37,6 @@ const ProjectDetail = () => {
     project,
     keywords,
     uniqueExtractionDates,
-    projectLogo,
     loading,
     error,
     reloadLogo,
@@ -51,7 +50,7 @@ const ProjectDetail = () => {
   const [exportDateAnchorEl, setExportDateAnchorEl] = useState(null);
   const [exportPdfDateAnchorEl, setExportPdfDateAnchorEl] = useState(null);
   const [editProjectAnchorEl, setEditProjectAnchorEl] = useState(null);
-  const [projectLogoFile, setProjectLogoFile] = useState(projectLogo); // State for project logo file
+  const [projectLogoFile, setProjectLogoFile] = useState(null); // State for project logo file
 
   // State for progress indicator
   const [showProgress, setShowProgress] = useState(false);
@@ -65,6 +64,10 @@ const ProjectDetail = () => {
   useEffect(() => {
     if (project?.ProgettiSerp_GoogleRegione) {
       setSearchEngine(project.ProgettiSerp_GoogleRegione);
+      const projectLogo =
+        `/personal/${AZIENDA}/doc/logo/logo_${project?.IDOBJ}.png?v=${Math.random()}` ||
+        null;
+      setProjectLogoFile(projectLogo);
     } else if (project) {
       setSearchEngine("Italia");
     }

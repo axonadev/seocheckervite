@@ -103,7 +103,16 @@ const useProjectData = (projectId, token, SERVERAPI, AZIENDA) => {
   const fetchLogo = useCallback(() => {
     if (!projectId || !AZIENDA) return;
     // Fetch logo - uses progImg in dependency array indirectly via reloadLogo
-    fetch(`/personal/${AZIENDA}/doc/logo/logo_${projectId}.png?v=${progImg}`) // Use progImg for cache busting
+
+    console.log(
+      "Fetching logo for projectId:",
+      `/personal/${AZIENDA}/doc/logo/logo_${projectId}.png?v=${progImg}`
+    );
+    setProjectLogo(
+      `/personal/${AZIENDA}/doc/logo/logo_${projectId}.png?v=${progImg}`
+    );
+
+    /*     fetch(`/personal/${AZIENDA}/doc/logo/logo_${projectId}.png?v=${progImg}`) // Use progImg for cache busting
       .then(async (res) => {
         if (res.ok) {
           const blob = await res.blob();
@@ -121,7 +130,7 @@ const useProjectData = (projectId, token, SERVERAPI, AZIENDA) => {
       .catch((err) => {
         console.error("Error fetching project logo:", err);
         setProjectLogo(null);
-      });
+      }); */
   }, [projectId, AZIENDA, progImg]); // Add progImg dependency
 
   useEffect(() => {
