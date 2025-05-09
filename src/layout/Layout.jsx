@@ -12,7 +12,7 @@ import useDevice from "../hooks/useDevice";
 import Header from "../components/Header";
 
 
-const Layout = ({ children, onProjectAdded, showSearchBar = true, onSearch = () => {} , label = "Home"}) => {
+const Layout = ({ children, onProjectAdded, showSearchBar = true, onSearch = () => {}, label = "Home", filterBar }) => {
   const naviga = useNavigate();
   const { dimensions } = useDevice(); 
   const sessionToken = localStorage.getItem("axo_token");
@@ -47,7 +47,12 @@ const Layout = ({ children, onProjectAdded, showSearchBar = true, onSearch = () 
            flexGrow: 1
           }}
         >
-          {showSearchBar && <SearchBar onSearch={onSearch} />}
+          {showSearchBar && (
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <SearchBar onSearch={onSearch} />
+              {filterBar}
+            </Box>
+          )}
           {children}
         </Box>
       </Box>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 import Layout from "../layout/Layout";
 import ProjectGrid from "../components/ProjectGrid/ProjectGrid";
 import SearchBar from "../components/SearchBar";
@@ -19,6 +19,7 @@ const Homepage = ({ onLoadStart, onLoadComplete }) => {
   const [keywords, setKeywords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(""); // Stato per il termine di ricerca
+  const [autosendFilter, setAutosendFilter] = useState("all"); // new state for autosend filter
 
   const token = localStorage.getItem("axo_token");
 
@@ -124,12 +125,18 @@ const Homepage = ({ onLoadStart, onLoadComplete }) => {
     loadDati();
   };
 
-  // Filtra i progetti in base al termine di ricerca
-  const filteredProjects = dati.filter(
-    (project) =>
+  // Filtra i progetti in base al termine di ricerca e filtro autosend
+  const filteredProjects = dati.filter((project) => {
+    // Mostra solo progetti attivi (stato=0)
+    if (project.ProgettiSerp_Stato !== 0) return false;
+    const matchesSearch =
       (project.ProgettiSerp_Nome || "").toLowerCase().includes(searchTerm) ||
-      (project.ProgettiSerp_DNS || "").toLowerCase().includes(searchTerm)
-  );
+      (project.ProgettiSerp_DNS || "").toLowerCase().includes(searchTerm);
+    if (autosendFilter === "all") return matchesSearch;
+    if (autosendFilter === "autosend") return matchesSearch && project.ProgettiSerp_AutoSend == 1;
+    if (autosendFilter === "noautosend") return matchesSearch && (!project.ProgettiSerp_AutoSend || project.ProgettiSerp_AutoSend == 0);
+    return matchesSearch;
+  });
 
   if (loading) return null;
 
@@ -138,6 +145,22 @@ const Homepage = ({ onLoadStart, onLoadComplete }) => {
       onProjectAdded={handleProjectAdded}
       showSearchBar={true}
       onSearch={handleSearch}
+      filterBar={
+        <FormControl size="small" sx={{ minWidth: 180, ml: 2 }}>
+          <InputLabel id="autosend-filter-label">Filtro invio automatico</InputLabel>
+          <Select
+            labelId="autosend-filter-label"
+            id="autosend-filter"
+            value={autosendFilter}
+            label="Filtro invio automatico"
+            onChange={(e) => setAutosendFilter(e.target.value)}
+          >
+            <MenuItem value="all">Tutti i progetti</MenuItem>
+            <MenuItem value="autosend">Solo autosend</MenuItem>
+            <MenuItem value="noautosend">Senza autosend</MenuItem>
+          </Select>
+        </FormControl>
+      }
     >
       <Box sx={{ pl: 2, pr: 3 }}>
         <ProjectGrid

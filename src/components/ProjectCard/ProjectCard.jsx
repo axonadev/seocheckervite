@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -41,7 +41,7 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
     message: "",
     severity: "success",
   });
-  const [autoSend, setAutoSend] = useState(project.autoSendReport || false);
+  const [autoSend, setAutoSend] = useState(Boolean(project.ProgettiSerp_AutoSend));
   const { SERVERAPI } = useEnv();
   const token = localStorage.getItem("axo_token");
 
@@ -59,6 +59,11 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
     project.ProgettiSerp_DNS || project.domain || "No domain";
   const keywordCount = project.totaleKeyword || project.keywords || 0;
   const lastReportDate = project.dataKeyword || null;
+
+  // Sync autoSend state with project prop
+  useEffect(() => {
+    setAutoSend(Boolean(project.ProgettiSerp_AutoSend));
+  }, [project.ProgettiSerp_AutoSend, project.IDOBJ]);
 
   const handleArchiveProject = async (event) => {
     event.stopPropagation();
