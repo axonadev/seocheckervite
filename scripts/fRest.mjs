@@ -68,3 +68,32 @@ export const fai = async (
     console.error("Dati errati o utente non registrato", error);
   }
 };
+
+export const scrivi = async (SERVERAPI, Token, idobj, DB, Classe, jsonObj) => {
+  const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+  const raw = JSON.stringify({
+    Token: Token,
+    IDOBJ: idobj,
+    DB: DB,
+    Modulo: DB,
+    Classe: Classe,
+    Item: " {" + DB + ":[" + JSON.stringify(jsonObj) + "]} ",
+  });
+
+  const option = {
+    method: "POST",
+    headers: myHeaders,
+    body: raw,
+    redirect: "follow",
+  };
+
+  const response = await fetch(SERVERAPI + "/api/axo_sel", option);
+
+  if (!response.ok) {
+    throw new Error(`Response status: ${response.status}`);
+  }
+  const json = await response.json();
+
+  return json;
+};

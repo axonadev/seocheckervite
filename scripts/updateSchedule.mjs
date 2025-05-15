@@ -43,17 +43,9 @@ async function updateSchedule() {
     }
 
     // Esegui l'aggiornamento sul database
-    /* const queryClasse = `
-      UPDATE ProgettiSerp
-      SET ProgettiSerp_Stato=100 + IDOBJ,
-          ProgettiSerp_UltimoReport='${new Date().toISOString()}'
-      WHERE AZIENDA='{AZIENDA}' AND ProgettiSerp_Stato=0
-        AND ProgettiSerp_GruppoUpdate=${ultimoGruppo}
-    `; */
-
     const queryClasse = `
       UPDATE ProgettiSerp
-      SET ProgettiSerp_Stato=1,
+      SET ProgettiSerp_Stato=100 + IDOBJ,
           ProgettiSerp_UltimoReport='${new Date().toISOString()}'
       WHERE AZIENDA='{AZIENDA}' AND ProgettiSerp_Stato=0
         AND ProgettiSerp_GruppoUpdate=${ultimoGruppo}

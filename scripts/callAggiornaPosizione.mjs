@@ -11,4 +11,4 @@ if (!IDOBJ || !idStato) {
 }
 
 // Richiama la funzione principale
-aggiornaPosizioneProgetto(IDOBJ, idStato, pathFile);
+aggiornaPosizioneProgetto(IDOBJ, idStato);
