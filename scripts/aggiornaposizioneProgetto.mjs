@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import { leggi, fai } from "./fRest.mjs"; // Funzione per leggere dal database
 import ZenRowsConnection from "./zenrows.mjs"; // Classe per gestire ZenRows
 import { SERVERAPI, AZIENDA } from "./env.mjs"; // Importa le variabili di ambiente

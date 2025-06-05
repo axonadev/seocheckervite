@@ -17,6 +17,8 @@
     "postmail": "node scripts/sendAutoReports.js",
     "downimg": "node scripts/updateImgSite.mjs",
     "scheduleupd": "node scripts/updateSchedule.mjs",
+    "runupd": "node scripts/runUpdate.mjs",
+    "runupdposizione": "node scripts/runUpdatePosizione.mjs",
     "aggiornaposizione": "node scripts/callAggiornaPosizione.mjs -- 4 61"
   },
   "dependencies": {

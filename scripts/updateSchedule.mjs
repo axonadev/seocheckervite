@@ -1,9 +1,8 @@
-import cron from "node-cron";
 import { getAuthToken } from "./auth.mjs"; // Importa la funzione di login
 import { leggi, fai } from "./fRest.mjs"; // Importa la funzione di lettura del DB
 import { SERVERAPI } from "./env.mjs"; // Importa le variabili di ambiente
 
-async function updateSchedule() {
+export async function updateSchedule() {
   const Token = await getAuthToken(); // Ottieni il token di autenticazione
 
   const dtMax = await leggi(
@@ -74,11 +73,3 @@ async function updateSchedule() {
     console.error("Errore in updateSchedule:", error);
   }
 }
-
-// Pianifica ogni giorno alle 03:00
-cron.schedule("10 4 * * *", () => {
-  // Esegui la funzione
-  const now = new Date().toLocaleString();
-  console.log("AVVIO SCHEDULE", `[${now}] \n`);
-  updateSchedule();
-});

@@ -88,24 +88,31 @@ class ZenRowsConnection {
       if (data) {
         // Processa i risultati
         const organicResults = data.organic_results || [];
+        console.log(
+          `Trovati ${organicResults.length} risultati per la query: ${queryR}`
+        );
+
+        console.log(data);
         let y = 0;
         for (const result of organicResults) {
-          y = y++;
+          y = y + 1;
 
-          const link = result.link || "";
-          const dominio = link
+          const link = String(result.link).replaceAll("/", "-S-") || "";
+          const dominio = String(result.link)
             .replace("http://", "")
             .replace("https://", "")
             .split("/")[0]
             .replace("www.", "");
 
           if (dominio.includes(dns)) {
+            const posizione = parseFloat(startR) + parseFloat(y);
+
             const jsonObj = {
               IDOBJ: 0,
               PIDOBJ: id_kw,
               AZIENDA: AZIENDA,
               ProgettiSerpReport_DataEstrazione: new Date().toISOString(),
-              ProgettiSerpReport_Posizione: parseFloat(startR) + y,
+              ProgettiSerpReport_Posizione: posizione,
               ProgettiSerpReport_URL: link,
             };
 
@@ -118,13 +125,15 @@ class ZenRowsConnection {
               jsonObj
             );
 
+            console.log(response[0].Risposta);
+
             if (response.error) {
               console.error(
                 `Errore durante la scrittura dei dati per ${link}: ${response.error}`
               );
             } else {
               console.log(
-                `Salvato ${link} in ProgettiSerpReport con ID: ${response.data}`
+                `Salvato ${link} in ProgettiSerpReport con ID: ${response[0].Risposta}`
               );
             }
           }

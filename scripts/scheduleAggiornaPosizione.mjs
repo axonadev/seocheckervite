@@ -1,10 +1,9 @@
-import cron from "node-cron";
 import { getAuthToken } from "./auth.mjs"; // Importa la funzione di login
 import { leggi } from "./fRest.mjs"; // Importa la funzione di lettura del DB
 import { SERVERAPI } from "./env.mjs"; // Importa le variabili di ambiente
 import { spawn } from "child_process"; // Per eseguire script in parallelo
 
-async function parallelUpdateSchedule() {
+export async function parallelUpdateSchedule() {
   const Token = await getAuthToken(); // Ottieni il token di autenticazione
 
   try {
@@ -37,7 +36,7 @@ async function parallelUpdateSchedule() {
 
         // Esegui lo script callAggiornamentoPosizione.mjs
         const process = spawn("node", [
-          "scripts/callAggiornamentoPosizione.mjs",
+          "scripts/callAggiornaPosizione.mjs",
           idProgetto,
           statoProgetto,
         ]);
@@ -69,9 +68,3 @@ async function parallelUpdateSchedule() {
     console.error("Errore in parallelUpdateSchedule:", error);
   }
 }
-
-// Pianifica ogni giorno alle 05:00
-cron.schedule("0 5 * * *", () => {
-  console.log("Esecuzione pianificata di parallelUpdateSchedule alle 05:00.");
-  parallelUpdateSchedule();
-});

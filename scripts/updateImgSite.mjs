@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import https from "https";
-import cron from "node-cron";
+
 import { getAuthToken } from "./auth.mjs"; // Importa la funzione di login
 import { leggi } from "./fRest.mjs"; // Importa la funzione di lettura del DB
 import { SERVERAPI, SITO } from "./env.mjs"; // Importa le variabili di ambiente
@@ -44,7 +44,7 @@ async function getProjects() {
 }
 
 // Funzione principale
-async function updateImgSite() {
+export async function updateImgSite() {
   try {
     const projects = await getProjects();
 
@@ -70,11 +70,3 @@ async function updateImgSite() {
     console.error("Errore in updateImgSite:", error);
   }
 }
-
-// Pianifica ogni giorno alle 03:00
-cron.schedule("0 6 * * *", () => {
-  // Esegui la funzione
-  const now = new Date().toLocaleString();
-  console.log("AVVIO UPDIMG", `[${now}] \n`);
-  updateImgSite();
-});
