@@ -2,11 +2,17 @@ module.exports = {
   apps: [
     {
       name: "scheduler",
-      script: "schedule.js",
+      script: "schedule.mjs",
     },
     {
       name: "mRunUpdate",
-      script: "runUpdate.js",
+      script: "runUpdate.mjs",
+      autorestart: false,
+      watch: false,
+    },
+    {
+      name: "mRunUpdatePosizione",
+      script: "runUpdatePosizione.mjs",
       autorestart: false,
       watch: false,
     },

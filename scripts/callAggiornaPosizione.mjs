@@ -6,11 +6,11 @@ const idStato = process.argv[3]; // Secondo parametro: idStato
 //const pathFile = process.argv[4] || "C:/Axona/fileimport/" + idStato; // Terzo parametro: pathFile (opzionale)
 
 try {
-  console.error("[IDOBJ: " + IDOBJ + "] [idStato: " + idStato + "] ");
+  console.log("[IDOBJ: " + IDOBJ + "] [idStato: " + idStato + "] ");
 } catch (error) {}
 
 try {
-  console.error(process.argv);
+  console.log(process.argv);
 } catch (error) {}
 
 if (!IDOBJ || !idStato) {

@@ -1,7 +1,7 @@
 import cron from "node-cron";
 import fs from "fs";
 
-import { updateSchedule } from "./updateSchedule.js";
+import { updateSchedule } from "./updateSchedule.mjs";
 import { parallelUpdateSchedule } from "./scheduleAggiornaPosizione.mjs"; // Importa la funzione per l'aggiornamento parallelo
 import { updateImgSite } from "./updateImgSite.mjs"; // Importa la funzione per l'aggiornamento delle immagini
 
@@ -71,4 +71,11 @@ cron.schedule("*/5 * * * *", () => {
       console.log("Log scritto con successo:", logLine.trim());
     }
   });
+});
+
+// Pianifica ogni 1 minuti
+cron.schedule("*/1 * * * *", () => {
+  const now = new Date().toLocaleString();
+  const logLine = `[${now}] Esecuzione cron ogni 1 minuti\n`;
+  parallelUpdateSchedule(true);
 });
