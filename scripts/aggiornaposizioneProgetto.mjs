@@ -75,6 +75,7 @@ export async function aggiornaPosizioneProgetto(IDOBJ, idStato) {
     await resetStatoProgetto(SERVERAPI, TOKEN, DB, in_CtrlAzienda, IDOBJ);
   } catch (err) {
     console.error("Errore durante l'elaborazione del progetto:", err.message);
+    await resetStatoProgetto(SERVERAPI, TOKEN, DB, in_CtrlAzienda, IDOBJ);
   }
 }
 
