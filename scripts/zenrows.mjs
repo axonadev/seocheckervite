@@ -149,6 +149,16 @@ class ZenRowsConnection {
 
   // Metodo per controllare una parola chiave
   async ControllaParola(parola, start, dns, idkw, regione) {
+    if (
+      parola === undefined ||
+      parola === "" ||
+      parola === null ||
+      parola.trim() === "null"
+    ) {
+      console.error("La parola chiave non può essere vuota.");
+      return;
+    }
+
     try {
       console.log(
         `Eseguo richiesta a ZenRows per la parola: ${parola}, pagina: ${start}`
