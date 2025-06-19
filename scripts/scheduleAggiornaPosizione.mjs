@@ -26,21 +26,24 @@ export async function parallelUpdateSchedule(manuale = false) {
       //ciclo per aggiornare i progetti con stato = 10 in stato ProgettiSerp_Stato + 1000
       const progettiM = dtM.Itemset.ProgettiSERP;
       for (const progetto of progettiM) {
-        const idProgetto = progetto.IDOBJ;
+        const idProgetto = progetto?.IDOBJ || 0;
         console.log(
           `Aggiorno stato progetto IDOBJ: ${idProgetto} da 10 a +1000`
         );
-        const resp = await scrivi(
-          SERVERAPI,
-          Token,
-          idProgetto,
-          "ProgettiSERP",
-          "ProgettiSERPSel",
-          {
-            IDOBJ: idProgetto,
-            ProgettiSerp_Stato: idProgetto + 1000,
-          }
-        );
+
+        if (idProgetto > 0) {
+          const resp = await scrivi(
+            SERVERAPI,
+            Token,
+            idProgetto,
+            "ProgettiSERP",
+            "ProgettiSERPSel",
+            {
+              IDOBJ: idProgetto,
+              ProgettiSerp_Stato: idProgetto + 1000,
+            }
+          );
+        }
       }
     }
 
