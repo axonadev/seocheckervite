@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -54,6 +54,10 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
     ? `/personal/${aziendaPIVA}/img/${projectId}.jpeg`
     : null;
   // --- End Image State and URL ---
+
+  useEffect(() => {
+    setIsUpdating(project.ProgettiSerp_Stato > 9);
+  }, [project.ProgettiSerp_Stato]);
 
   const domainToDisplay =
     project.ProgettiSerp_DNS || project.domain || "No domain";
