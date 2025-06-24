@@ -25,6 +25,17 @@ export async function parallelUpdateSchedule(manuale = false) {
 
       //ciclo per aggiornare i progetti con stato = 10 in stato ProgettiSerp_Stato + 1000
       const progettiM = dtM.Itemset.ProgettiSERP;
+
+      fs.appendFile(
+        logFilePath,
+        `[${now}] DEBUG manuale ${JSON.stringify(progettiM)}\n`,
+        (err) => {
+          if (err) {
+            console.error("Errore nella scrittura del file:", err);
+          } else {
+          }
+        }
+      );
       for (const progetto of progettiM) {
         const idProgetto = progetto?.IDOBJ || 0;
         console.log(
@@ -79,6 +90,13 @@ export async function parallelUpdateSchedule(manuale = false) {
         return new Promise((resolve, reject) => {
           const idProgetto = progetto.IDOBJ;
           const statoProgetto = progetto.ProgettiSerp_Stato;
+
+          if (!idProgetto || !statoProgetto) {
+            console.warn(
+              `Progetto con IDOBJ: ${idProgetto} o stato: ${statoProgetto} non valido.`
+            );
+            return resolve(); // Continua con il prossimo progetto
+          }
 
           console.log(
             `Eseguo callAggiornamentoPosizione.mjs per IDOBJ: ${idProgetto}, Stato: ${statoProgetto}`
