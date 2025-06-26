@@ -896,7 +896,7 @@ async function sendAllAutoReports() {
         const response = await sendReportEmail({
           to: project.email,
           subject: emailSubject,
-          text: `Gentile Cliente,\n\nNon sono disponibili dati di posizionamento per il progetto "${project.ProgettiSerp_Nome}".\nTi invitiamo a contattarci per maggiori informazioni.\n\nCordiali saluti,\nTeam SEO`,
+          text: `Gentile Cliente,\n\nNon sono disponibili dati di posizionamento per il progetto "${project.ProgettiSerp_Nome}".\nTi invitiamo a contattarci per maggiori informazioni.\n\nCordiali saluti,\nIl Team AM Partners`,
         });
 
         console.log(
@@ -935,7 +935,7 @@ async function sendAllAutoReports() {
         project.ProgettiSerp_Nome
       );
 
-      let emailText = `Gentile Cliente,\n\nin allegato il report SEO aggiornato per il progetto "${project.ProgettiSerp_Nome}".\n\nData ultimo aggiornamento: ${new Date(latestDate).toLocaleDateString("it-IT")}\n\nCordiali saluti,\nTeam SEO`;
+      let emailText = `Gentile Cliente,\n\nin allegato il report SEO aggiornato per il progetto "${project.ProgettiSerp_Nome}".\n\nData ultimo aggiornamento: ${new Date(latestDate).toLocaleDateString("it-IT")}\n\nCordiali saluti,\nIl Team AM Partners`;
       const emailSubject = `Report SEO ${project.ProgettiSerp_Nome} - ${new Date().toLocaleDateString("it-IT")}`;
       const attachments = [];
 
@@ -950,7 +950,7 @@ async function sendAllAutoReports() {
         );
       } else {
         // Se non c'è PDF, modifica il testo
-        emailText = `Gentile Cliente,\n\nQuesto è il report automatico per il progetto "${project.ProgettiSerp_Nome}".\n\nData ultimo aggiornamento: ${new Date(latestDate).toLocaleDateString("it-IT")}\n\nIl report dettagliato sarà disponibile a breve.\n\nCordiali saluti,\nTeam SEO`;
+        emailText = `Gentile Cliente,\n\nQuesto è il report automatico per il progetto "${project.ProgettiSerp_Nome}".\n\nData ultimo aggiornamento: ${new Date(latestDate).toLocaleDateString("it-IT")}\n\nIl report dettagliato sarà disponibile a breve.\n\nCordiali saluti,\nIl Team AM Partners`;
         console.log(
           `⚠️ [STEP 3.${projects.indexOf(project) + 1}.2] Nessun PDF disponibile - invio senza allegato`
         );
