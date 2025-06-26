@@ -18,24 +18,21 @@ export async function parallelUpdateSchedule(manuale = false) {
         "WHERE AZIENDA='{AZIENDA}' AND ProgettiSerp_Stato = 10 ORDER BY ProgettiSerp_UltimoReport DESC"
       );
 
-      if (!dtM?.Itemset?.ProgettiSERP) {
-        console.log("Nessun progetto trovato con stato = 10.");
+      try {
+        if (
+          dtM?.Itemset?.ProgettiSERP[0]?.IDOBJ == null ||
+          dtM?.Itemset?.ProgettiSERP[0]?.IDOBJ == undefined
+        ) {
+          console.log("Nessun progetto trovato con stato = 10.");
+          return;
+        }
+      } catch (error) {
         return;
       }
 
       //ciclo per aggiornare i progetti con stato = 10 in stato ProgettiSerp_Stato + 1000
       const progettiM = dtM.Itemset.ProgettiSERP;
 
-      fs.appendFile(
-        logFilePath,
-        `[${now}] DEBUG manuale ${JSON.stringify(progettiM)}\n`,
-        (err) => {
-          if (err) {
-            console.error("Errore nella scrittura del file:", err);
-          } else {
-          }
-        }
-      );
       for (const progetto of progettiM) {
         const idProgetto = progetto?.IDOBJ || 0;
         console.log(

@@ -77,5 +77,14 @@ cron.schedule("*/5 * * * *", () => {
 cron.schedule("*/1 * * * *", () => {
   const now = new Date().toLocaleString();
   const logLine = `[${now}] Esecuzione cron ogni 1 minuti\n`;
+
+  fs.appendFile(logFilePath, logLine, (err) => {
+    if (err) {
+      console.error("Errore nella scrittura del file:", err);
+    } else {
+      console.log("Log scritto con successo:", logLine.trim());
+    }
+  });
+
   parallelUpdateSchedule(true);
 });
