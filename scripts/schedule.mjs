@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import fs from "fs";
+import { spawn } from "child_process";
 
 import { updateSchedule } from "./updateSchedule.mjs";
 import { parallelUpdateSchedule } from "./scheduleAggiornaPosizione.mjs"; // Importa la funzione per l'aggiornamento parallelo
@@ -49,6 +50,52 @@ cron.schedule("0 6 * * *", () => {
   updateImgSite();
 
   const logLine = `[${now}] "AVVIO UPDIMG"\n`;
+
+  fs.appendFile(logFilePath, logLine, (err) => {
+    if (err) {
+      console.error("Errore nella scrittura del file:", err);
+    } else {
+      console.log("Log scritto con successo:", logLine.trim());
+    }
+  });
+});
+
+// 📧 INVIO AUTOMATICO REPORT PDF - Ogni 5 minuti (TEST)
+cron.schedule("*/2 * * * *", () => {
+  const now = new Date().toLocaleString();
+  console.log("🚀 AVVIO INVIO AUTOMATICO REPORT PDF", now);
+
+  const logLine = `[${now}] "AVVIO INVIO AUTOMATICO REPORT PDF"\n`;
+
+  // Esegui il script sendAutoReports.js
+  const reportProcess = spawn("node", ["scripts/sendAutoReports.js"], {
+    cwd: process.cwd(),
+    stdio: "inherit",
+  });
+
+  reportProcess.on("close", (code) => {
+    const endTime = new Date().toLocaleString();
+    const endLogLine = `[${endTime}] "FINE INVIO AUTOMATICO REPORT PDF - Exit code: ${code}"\n`;
+    console.log(`✅ Script invio report completato con exit code: ${code}`);
+
+    fs.appendFile(logFilePath, endLogLine, (err) => {
+      if (err) {
+        console.error("Errore nella scrittura del file log finale:", err);
+      }
+    });
+  });
+
+  reportProcess.on("error", (err) => {
+    const errorTime = new Date().toLocaleString();
+    const errorLogLine = `[${errorTime}] "ERRORE INVIO AUTOMATICO REPORT PDF: ${err.message}"\n`;
+    console.error("❌ Errore nell'esecuzione script invio report:", err);
+
+    fs.appendFile(logFilePath, errorLogLine, (err) => {
+      if (err) {
+        console.error("Errore nella scrittura del file log errore:", err);
+      }
+    });
+  });
 
   fs.appendFile(logFilePath, logLine, (err) => {
     if (err) {

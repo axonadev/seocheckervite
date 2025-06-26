@@ -14,6 +14,7 @@ import {
   IconButton,
   CardMedia,
   Skeleton,
+  TextField,
 } from "@mui/material";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import UpdateIcon from "@mui/icons-material/Update";
@@ -41,7 +42,12 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
     message: "",
     severity: "success",
   });
-  const [autoSend, setAutoSend] = useState(project.autoSendReport || false);
+  const [autoSend, setAutoSend] = useState(
+    project.ProgettiSerp_AutoSend || false
+  );
+  const [autoSendMail, setAutoSendMail] = useState(
+    project.ProgettiSerp_AutoSendMail || ""
+  );
   const { SERVERAPI } = useEnv();
   const token = localStorage.getItem("axo_token");
 
@@ -167,6 +173,53 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
       });
       setAutoSend(!newValue); // rollback
     }
+  };
+
+  const handleAutoSendMailChange = (e) => {
+    e.stopPropagation();
+    const newEmail = e.target.value;
+    setAutoSendMail(newEmail);
+  };
+
+  const saveAutoSendMail = async () => {
+    try {
+      const apiUrl = `${SERVERAPI}/api/axo_sel`;
+      const UpdPj = {
+        IDOBJ: project.IDOBJ,
+        ProgettiSerp_AutoSendMail: autoSendMail,
+      };
+      await Scrivi(
+        apiUrl,
+        token,
+        project.IDOBJ,
+        "progettiserp",
+        "progettiserpsel",
+        UpdPj
+      );
+      setSnackbar({
+        open: true,
+        message: "Email salvata con successo",
+        severity: "success",
+      });
+      if (onProjectUpdate) onProjectUpdate(project.IDOBJ);
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: "Errore salvataggio email",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleAutoSendMailKeyPress = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.target.blur(); // Rimuove il focus per attivare onBlur
+    }
+  };
+
+  const handleAutoSendMailBlur = () => {
+    saveAutoSendMail();
   };
 
   const handleOpenArchiveModal = (event) => {
@@ -307,6 +360,21 @@ const ProjectCard = ({ project, onProjectUpdate = () => {} }) => {
           >
             {project.ProgettiSerp_Nome || "Unnamed Project"}
           </Typography>
+
+          {/* Email AutoSend Field */}
+          <TextField
+            size="small"
+            fullWidth
+            label="Email AutoSend"
+            value={autoSendMail}
+            onChange={handleAutoSendMailChange}
+            onKeyPress={handleAutoSendMailKeyPress}
+            onBlur={handleAutoSendMailBlur}
+            onClick={(e) => e.stopPropagation()}
+            variant="outlined"
+            sx={{ mb: 2 }}
+            placeholder="Inserisci email per invio automatico"
+          />
 
           <Box display="flex" alignItems="center" mb={2}>
             <LanguageIcon
