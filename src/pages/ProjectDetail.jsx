@@ -502,6 +502,8 @@ const ProjectDetail = () => {
               addKeywordPopoverId={addKeywordPopoverId}
               exportDatePopoverId={exportDatePopoverId}
               exportPdfDatePopoverId={exportPdfDatePopoverId}
+              project={project}
+              onProjectUpdate={reloadProjectData}
             />
           </Grid>
 

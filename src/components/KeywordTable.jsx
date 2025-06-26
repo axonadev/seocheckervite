@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -7,11 +7,16 @@ import {
   Select,
   MenuItem,
   FormControl,
+  TextField,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
 import KeyIcon from "@mui/icons-material/Key";
 import { Difference, PictureAsPdf } from "@mui/icons-material";
+import useEnv from "../hooks/useEnv";
+import { Scrivi } from "../utility/callFetch";
 
 const KeywordTable = ({
   keywords,
@@ -23,7 +28,78 @@ const KeywordTable = ({
   addKeywordPopoverId,
   exportDatePopoverId,
   exportPdfDatePopoverId,
+  project,
+  onProjectUpdate,
 }) => {
+  const { SERVERAPI } = useEnv();
+  const token = localStorage.getItem("axo_token");
+
+  // Email AutoSend state and functionality
+  const [autoSendMail, setAutoSendMail] = useState(
+    project?.ProgettiSerp_AutoSendMail || ""
+  );
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  // Update email when project changes
+  React.useEffect(() => {
+    setAutoSendMail(project?.ProgettiSerp_AutoSendMail || "");
+  }, [project?.ProgettiSerp_AutoSendMail]);
+
+  const handleAutoSendMailChange = (e) => {
+    const newEmail = e.target.value;
+    setAutoSendMail(newEmail);
+  };
+
+  const saveAutoSendMail = async () => {
+    if (!project?.IDOBJ) return;
+
+    try {
+      const apiUrl = `${SERVERAPI}/api/axo_sel`;
+      const UpdPj = {
+        IDOBJ: project.IDOBJ,
+        ProgettiSerp_AutoSendMail: autoSendMail,
+      };
+      await Scrivi(
+        apiUrl,
+        token,
+        project.IDOBJ,
+        "progettiserp",
+        "progettiserpsel",
+        UpdPj
+      );
+      setSnackbar({
+        open: true,
+        message: "Email salvata con successo",
+        severity: "success",
+      });
+      if (onProjectUpdate) onProjectUpdate(project.IDOBJ);
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: "Errore salvataggio email",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleAutoSendMailKeyPress = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.target.blur(); // Rimuove il focus per attivare onBlur
+    }
+  };
+
+  const handleAutoSendMailBlur = () => {
+    saveAutoSendMail();
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
   const keywordColumns = [
     {
       field: "KeywordSerp_Keyword",
@@ -192,6 +268,19 @@ const KeywordTable = ({
           <Typography variant="h6">Totale Keywords</Typography>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {/* Email AutoSend Field */}
+          <TextField
+            size="small"
+            label="Email AutoSend"
+            value={autoSendMail}
+            onChange={handleAutoSendMailChange}
+            onKeyPress={handleAutoSendMailKeyPress}
+            onBlur={handleAutoSendMailBlur}
+            variant="outlined"
+            sx={{ minWidth: 200 }}
+            placeholder="Email per invio automatico"
+          />
+
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <Select
               labelId="search-engine-label"
@@ -211,6 +300,7 @@ const KeywordTable = ({
               <MenuItem value="Portogallo">google.pt - Portogallo</MenuItem>
             </Select>
           </FormControl>
+
           <IconButton
             size="small"
             onClick={onOpenExportDate}
@@ -248,6 +338,21 @@ const KeywordTable = ({
           getRowId={(row) => row.id}
         />
       </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 };
