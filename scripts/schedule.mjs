@@ -68,10 +68,14 @@ cron.schedule("*/2 * * * *", () => {
   const logLine = `[${now}] "AVVIO INVIO AUTOMATICO REPORT PDF"\n`;
 
   // Esegui il script sendAutoReports.js
-  const reportProcess = spawn("node", ["scripts/sendAutoReports.js"], {
-    cwd: process.cwd(),
-    stdio: "inherit",
-  });
+  const reportProcess = spawn(
+    "node",
+    ["C:\\siti\\scriptNodejs\\scripts\\sendAutoReports.js"],
+    {
+      cwd: process.cwd(),
+      stdio: "inherit",
+    }
+  );
 
   reportProcess.on("close", (code) => {
     const endTime = new Date().toLocaleString();
