@@ -61,7 +61,7 @@ cron.schedule("0 6 * * *", () => {
 });
 
 // 📧 INVIO AUTOMATICO REPORT PDF - Ogni 5 minuti (TEST)
-cron.schedule("*/2 * * * *", () => {
+cron.schedule("0 9 25 * *", () => {
   const now = new Date().toLocaleString();
   console.log("🚀 AVVIO INVIO AUTOMATICO REPORT PDF", now);
 
@@ -70,7 +70,7 @@ cron.schedule("*/2 * * * *", () => {
   // Esegui il script sendAutoReports.js
   const reportProcess = spawn(
     "node",
-    ["C:\\siti\\scriptNodejs\\scripts\\sendAutoReports.js"],
+    ["C:\\siti\\scriptNodejs\\scripts\\sendAutoReports.mjs"],
     {
       cwd: process.cwd(),
       stdio: "inherit",

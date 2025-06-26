@@ -14,7 +14,7 @@
     "generate-pwa-assets": "pwa-assets-generator --preset minimal-2023 public/logo.svg",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "postmail": "node scripts/sendAutoReports.js",
+    "postmail": "node scripts/sendAutoReports.mjs",
     "downimg": "node scripts/updateImgSite.mjs",
     "scheduleupd": "node scripts/updateSchedule.mjs",
     "runupd": "node scripts/runUpdate.mjs",
